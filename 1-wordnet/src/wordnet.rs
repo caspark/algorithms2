@@ -77,8 +77,14 @@ impl WordNet {
         })
     }
 
-    pub fn nouns() -> Vec<String> {
-        panic!("Not implemented");
+    pub fn nouns(&self) -> Vec<&String> {
+        let mut all_nouns = Vec::new();
+        for synset in self.synsets.iter() {
+            for noun in synset.nouns.iter() {
+                all_nouns.push(noun);
+            }
+        }
+        all_nouns
     }
 
     pub fn is_noun(word: String) -> bool {
