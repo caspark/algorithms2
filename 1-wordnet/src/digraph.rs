@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-struct Digraph {
+pub struct Digraph {
     v: i32,
     e: i32,
     adj: Vec<Vec<i32>>,

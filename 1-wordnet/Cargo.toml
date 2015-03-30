@@ -3,3 +3,8 @@
 name = "1_wordnet"
 version = "0.0.1"
 authors = ["Caspar Krieger <caspar@asparck.com>"]
+
+[dependencies]
+regex = "*"
+regex_macros = "*"
+mdo = "*"

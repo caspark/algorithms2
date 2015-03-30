@@ -1,4 +1,27 @@
 [root]
 name = "1_wordnet"
 version = "0.0.1"
+dependencies = [
+ "mdo 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.1.24 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex_macros 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "mdo"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "regex"
+version = "0.1.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "regex_macros"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "regex 0.1.24 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
