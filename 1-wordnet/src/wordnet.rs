@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::io;
 use digraph::Digraph;
 
@@ -15,14 +14,16 @@ struct WordNet {
 impl WordNet {
     pub fn parse(synsetsPath: String, hypernymsPath: String) -> io::Result<WordNet> {
         use std::io::prelude::*;
+        use std::fs::File;
 
-        let mut file = try!(File::open(synsetsPath));
-        let mut content = String::new();
-        try!(file.read_to_string(&mut content));
+        // parse synsets
+        let mut synsets_file = try!(File::open(synsetsPath));
+        let mut synsets_content = String::new();
+        try!(synsets_file.read_to_string(&mut synsets_content));
 
         let re = regex!(r"(?P<id>\d+),(?P<nouns>.+),(?P<gloss>.+)");
         let mut synsets = Vec::new();
-        for line in content.split("\n").skip(1) {
+        for line in synsets_content.split("\n").skip(1) {
             if line.len() == 0 {
                 break; // end of file
             }
@@ -49,9 +50,26 @@ impl WordNet {
             }
         }
 
-        let hypernyms = Digraph::new(synsets.len() as i32);
+        // parse hypernyms
+        let mut hypernyms_file = try!(File::open(hypernymsPath));
+        let mut hypernyms_content = String::new();
+        try!(hypernyms_file.read_to_string(&mut hypernyms_content));
 
-        //TODO parse hypernym graph
+        let mut hypernyms = Digraph::new(synsets.len() as i32);
+        for line in hypernyms_content.split("\n").skip(1) {
+            if line.len() == 0 {
+                break; // end of file
+            }
+
+            let mut synset = None;
+            for id_str in line.split(",") {
+                let id = id_str.parse().ok().expect("should only be digits in hypernyms file");
+                match synset {
+                    Some(synset_id) => hypernyms.add_edge(synset_id, id),
+                    None => synset = Some(id),
+                }
+            }
+        }
 
         Ok(WordNet {
             synsets: synsets,
