@@ -14,7 +14,7 @@ struct WordNet {
 }
 
 impl WordNet {
-    pub fn parse(synsetsPath: String, hypernymsPath: String) -> io::Result<WordNet> {
+    pub fn create_by_parsing_files(synsetsPath: String, hypernymsPath: String) -> io::Result<WordNet> {
         use std::io::prelude::*;
         use std::fs::File;
 
@@ -25,7 +25,6 @@ impl WordNet {
 
         let re = regex!(r"(?P<id>\d+),(?P<nouns>.+),(?P<gloss>.+)");
         let mut synsets = Vec::new();
-        let mut nouns_to_synsets = HashMap::new();
         for line in synsets_content.split("\n").skip(1) {
             if line.len() == 0 {
                 break; // end of file
@@ -36,7 +35,7 @@ impl WordNet {
                 mdo! {
                     caps =<< re.captures(line).as_ref();
                     id_str =<< caps.name("id");
-                    id =<< id_str.parse().ok();
+                    id =<< id_str.parse::<usize>().ok();
                     nouns =<< caps.name("nouns");
                     gloss =<< caps.name("gloss");
                     ret ret((id, Synset {
@@ -46,12 +45,6 @@ impl WordNet {
                 }
             };
             if let Some((synset_id, synset)) = parsed {
-                for noun in synset.nouns.iter() {
-                    //HACK clone the noun rather than worrying about lifetime constraints
-                    // (it's inefficient but technically allowed by the instructions)
-                    nouns_to_synsets.insert(noun.clone(), synset_id);
-                }
-
                 synsets.push(synset);
                 assert_eq!(synset_id, synsets.len() - 1);
             } else {
@@ -64,7 +57,7 @@ impl WordNet {
         let mut hypernyms_content = String::new();
         try!(hypernyms_file.read_to_string(&mut hypernyms_content));
 
-        let mut hypernyms = Digraph::new(synsets.len() as i32);
+        let mut hypernyms_edges = Vec::new();
         for line in hypernyms_content.split("\n").skip(1) {
             if line.len() == 0 {
                 break; // end of file
@@ -74,17 +67,35 @@ impl WordNet {
             for id_str in line.split(",") {
                 let id = id_str.parse().ok().expect("should only be digits in hypernyms file");
                 match synset {
-                    Some(synset_id) => hypernyms.add_edge(synset_id, id),
                     None => synset = Some(id),
+                    Some(synset_id) => hypernyms_edges.push((synset_id, id)),
                 }
             }
         }
 
-        Ok(WordNet {
+        Ok(WordNet::create_from_synsets_and_hypernyms(synsets, hypernyms_edges))
+    }
+
+    fn create_from_synsets_and_hypernyms(synsets: Vec<Synset>, hypernyms_edges: Vec<(i32, i32)>) -> WordNet {
+        let mut nouns_to_synsets = HashMap::new();
+        for (synset_id, synset) in synsets.iter().enumerate() {
+            for noun in synset.nouns.iter() {
+                //HACK clone the noun rather than worrying about lifetime constraints
+                // (it's inefficient but technically allowed by the instructions)
+                nouns_to_synsets.insert(noun.clone(), synset_id);
+            }
+        }
+
+        let mut hypernyms = Digraph::new(synsets.len() as i32);
+        for (a, b) in hypernyms_edges {
+            hypernyms.add_edge(a, b);
+        }
+
+        WordNet {
             nouns_to_synsets: nouns_to_synsets,
             synsets: synsets,
             hypernyms: hypernyms,
-        })
+        }
     }
 
     pub fn nouns(&self) -> Vec<&String> {
