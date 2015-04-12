@@ -6,6 +6,7 @@ extern crate regex;
 extern crate mdo;
 
 mod digraph;
+mod sap;
 mod wordnet;
 
 
