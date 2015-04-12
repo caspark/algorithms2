@@ -7,6 +7,8 @@ struct Synset {
 }
 
 struct WordNet {
+    nouns_to_synsets: HashMap<String, usize>,
+    //TODO map from usize -> actual synset entry
     synsets: Vec<Synset>,
     hypernyms: Digraph,
 }
