@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io;
 use digraph::Digraph;
 
@@ -7,10 +8,9 @@ struct Synset {
 }
 
 struct WordNet {
-    nouns_to_synsets: HashMap<String, usize>,
-    //TODO map from usize -> actual synset entry
-    synsets: Vec<Synset>,
-    hypernyms: Digraph,
+    nouns_to_synsets: HashMap<String, usize>, // usize = the synset id
+    synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
+    hypernyms: Digraph, // indexes = the indexes of the synsets
 }
 
 impl WordNet {
@@ -25,6 +25,7 @@ impl WordNet {
 
         let re = regex!(r"(?P<id>\d+),(?P<nouns>.+),(?P<gloss>.+)");
         let mut synsets = Vec::new();
+        let mut nouns_to_synsets = HashMap::new();
         for line in synsets_content.split("\n").skip(1) {
             if line.len() == 0 {
                 break; // end of file
@@ -44,9 +45,15 @@ impl WordNet {
                     }))
                 }
             };
-            if let Some((id, synset)) = parsed {
+            if let Some((synset_id, synset)) = parsed {
+                for noun in synset.nouns.iter() {
+                    //HACK clone the noun rather than worrying about lifetime constraints
+                    // (it's inefficient but technically allowed by the instructions)
+                    nouns_to_synsets.insert(noun.clone(), synset_id);
+                }
+
                 synsets.push(synset);
-                assert_eq!(id, synsets.len() - 1);
+                assert_eq!(synset_id, synsets.len() - 1);
             } else {
                 panic!("Failed to parse line '{}'", line)
             }
@@ -74,6 +81,7 @@ impl WordNet {
         }
 
         Ok(WordNet {
+            nouns_to_synsets: nouns_to_synsets,
             synsets: synsets,
             hypernyms: hypernyms,
         })
@@ -89,15 +97,21 @@ impl WordNet {
         all_nouns
     }
 
-    pub fn is_noun(word: String) -> bool {
+    pub fn is_noun(&self, word: &String) -> bool {
+        self.nouns_to_synsets.contains_key(word)
+    }
+
+    pub fn distance(&self, noun_a: &String, noun_b: &String) -> i32 {
+        assert!(self.is_noun(noun_a), format!("noun_a of {} is not a known noun!", noun_a));
+        assert!(self.is_noun(noun_b), format!("noun_b of {} is not a known noun!", noun_b));
+
         panic!("Not implemented");
     }
 
-    pub fn distance(noun_a: String, noun_b: String) -> i32 {
-        panic!("Not implemented");
-    }
+    pub fn sap(&self, noun_a: &String, noun_b: &String) -> Synset {
+        assert!(self.is_noun(noun_a), format!("noun_a of {} is not a known noun!", noun_a));
+        assert!(self.is_noun(noun_b), format!("noun_b of {} is not a known noun!", noun_b));
 
-    pub fn sap(noun_a: String, noun_b: String) -> String {
         panic!("Not implemented");
     }
 }
