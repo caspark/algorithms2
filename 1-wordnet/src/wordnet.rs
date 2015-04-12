@@ -14,12 +14,12 @@ struct WordNet {
 }
 
 impl WordNet {
-    pub fn create_by_parsing_files(synsetsPath: String, hypernymsPath: String) -> io::Result<WordNet> {
+    pub fn create_by_parsing_files(synsets_path: String, hypernyms_path: String) -> io::Result<WordNet> {
         use std::io::prelude::*;
         use std::fs::File;
 
         // parse synsets
-        let mut synsets_file = try!(File::open(synsetsPath));
+        let mut synsets_file = try!(File::open(synsets_path));
         let mut synsets_content = String::new();
         try!(synsets_file.read_to_string(&mut synsets_content));
 
@@ -53,7 +53,7 @@ impl WordNet {
         }
 
         // parse hypernyms
-        let mut hypernyms_file = try!(File::open(hypernymsPath));
+        let mut hypernyms_file = try!(File::open(hypernyms_path));
         let mut hypernyms_content = String::new();
         try!(hypernyms_file.read_to_string(&mut hypernyms_content));
 
