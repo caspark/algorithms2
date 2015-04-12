@@ -10,6 +10,13 @@ struct SAP {
 // API that's required so may as well group them here to match that.
 impl SAP {
     pub fn path_length_between(&self, v: i32, w: i32) -> Option<i32> {
+
+        //TODO should be able to calculate this by doing a BFS from v and w.
+        // Then for each vertex:
+        //   if the vertex is reachable from both v and w:
+        //     add num steps to get there from v and w.
+        //     if this total is the best we've seen so far, save the vertex as the new best common ancestor
+        // Then return sum the lengths of the path from v -> common ancestor + w -> common ancestor
         panic!("Not yet implemented");
     }
 
