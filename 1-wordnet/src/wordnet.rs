@@ -7,6 +7,16 @@ struct Synset {
     gloss: String,
 }
 
+impl Synset {
+    // Creates a synset with no gloss.
+    fn new(nouns: Vec<String>) -> Synset {
+        Synset {
+            nouns: nouns,
+            gloss: "".to_string(),
+        }
+    }
+}
+
 struct WordNet {
     nouns_to_synsets: HashMap<String, usize>, // usize = the synset id
     synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
@@ -124,5 +134,33 @@ impl WordNet {
         assert!(self.is_noun(noun_b), format!("noun_b of {} is not a known noun!", noun_b));
 
         panic!("Not implemented");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Synset, WordNet};
+
+    #[test]
+    fn should_have_no_nouns_initially() {
+        let w = WordNet::create_from_synsets_and_hypernyms(Vec::new(), Vec::new());
+
+        assert!(!w.is_noun(&"dog".to_string()));
+    }
+
+    #[test]
+    fn should_remember_nouns_in_synsets() {
+        let w = WordNet::create_from_synsets_and_hypernyms(
+            vec!(
+                Synset::new(vec!("dog".to_string(), "hound".to_string())),
+                Synset::new(vec!("god".to_string()))
+            ),
+            Vec::new()
+        );
+
+        assert!(w.is_noun(&"dog".to_string()));
+        assert!(w.is_noun(&"hound".to_string()));
+        assert!(w.is_noun(&"god".to_string()));
+        assert!(!w.is_noun(&"cat".to_string()));
     }
 }
