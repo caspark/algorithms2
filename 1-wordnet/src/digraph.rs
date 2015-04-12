@@ -42,3 +42,26 @@ impl Digraph {
         self.adj[checked_index].iter()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn adding_edges_should_make_src_vertex_adjacent_to_dest_vertex() {
+        let mut g = Digraph::new(2);
+
+        g.add_edge(0, 1);
+
+        assert_eq!(g.adj(0).cloned().collect::<Vec<_>>(), vec![1i32]);
+    }
+
+    #[test]
+    fn adding_edge_should_not_make_dest_vertex_adjacent_to_src_vertex() {
+        let mut g = Digraph::new(2);
+
+        g.add_edge(0, 1);
+
+        assert_eq!(g.adj(1).collect::<Vec<_>>().len(), 0);
+    }
+}
