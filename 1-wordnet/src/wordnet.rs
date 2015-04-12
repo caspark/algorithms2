@@ -18,6 +18,7 @@ impl Synset {
 }
 
 struct WordNet {
+    //FIXME "there can be several different synsets that consist of the same noun." which we aren't supporting here atm
     nouns_to_synsets: HashMap<String, usize>, // usize = the synset id
     synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
     hypernyms: Digraph, // indexes = the indexes of the synsets
