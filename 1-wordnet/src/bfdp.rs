@@ -4,31 +4,31 @@ use std::collections::VecDeque;
 // breadth first search over digraphs
 pub struct BfsResult {
     marked: Vec<bool>,
-    edge_to: Vec<i32>,
+    edge_to: Vec<usize>,
     dist_to: Vec<i32>,
 }
 
-pub fn search(g: Digraph, sources: Vec<i32>) -> BfsResult {
+pub fn search(g: Digraph, sources: Vec<usize>) -> BfsResult {
     let num_vertices = g.vertices() as usize;
     let mut result = BfsResult {
         marked: vec![false; num_vertices],
-        edge_to: vec![<i32>::max_value(); num_vertices],
+        edge_to: vec![<usize>::max_value(); num_vertices],
         dist_to: vec![0; num_vertices],
     };
 
     let mut q = VecDeque::new();
     for v in sources {
-        result.marked[v as usize] = true;
-        result.dist_to[v as usize] = 0;
+        result.marked[v] = true;
+        result.dist_to[v] = 0;
         q.push_back(v);
     }
     while q.len() > 0 {
         let v = q.pop_front().expect("queue length known to be > 0");
         for w in g.adj(v) {
-            if !result.marked[*w as usize] {
-                result.edge_to[*w as usize] = v;
-                result.dist_to[*w as usize] = result.dist_to[v as usize] + 1;
-                result.marked[*w as usize] = true;
+            if !result.marked[*w] {
+                result.edge_to[*w] = v;
+                result.dist_to[*w] = result.dist_to[v] + 1;
+                result.marked[*w] = true;
                 q.push_back(*w);
             }
         }
@@ -39,23 +39,23 @@ pub fn search(g: Digraph, sources: Vec<i32>) -> BfsResult {
 
 impl BfsResult {
     /// Returns None if there is no path
-    pub fn dist_to(&self, v: i32) -> Option<i32> {
-        if self.marked[v as usize] {
-            Some(self.dist_to[v as usize])
+    pub fn dist_to(&self, v: usize) -> Option<i32> {
+        if self.marked[v] {
+            Some(self.dist_to[v])
         } else {
             None
         }
     }
 
-    pub fn path_to(&self, v: i32) -> Option<Vec<i32>> {
-        if self.marked[v as usize] {
+    pub fn path_to(&self, v: usize) -> Option<Vec<usize>> {
+        if self.marked[v] {
             let mut path = Vec::new();
-            let mut x = v as usize;
+            let mut x = v;
             while self.dist_to[x] != 0 {
-                path.push(x as i32);
-                x = self.edge_to[x] as usize;
+                path.push(x);
+                x = self.edge_to[x];
             }
-            path.push(x as i32);
+            path.push(x);
             path.reverse();
             Some(path)
         } else {

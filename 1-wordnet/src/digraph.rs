@@ -1,22 +1,22 @@
 use std::slice::Iter;
 
 pub struct Digraph {
-    v: i32,
+    v: usize,
     e: i32,
-    adj: Vec<Vec<i32>>,
+    adj: Vec<Vec<usize>>,
 }
 
 impl Digraph {
-    pub fn new(v: i32) -> Digraph {
+    pub fn new(v: usize) -> Digraph {
         assert!(v >= 0, "number of vertices must be at least zero");
         Digraph {
             v: v,
             e: 0,
-            adj: (0..v).map(|_| Vec::new()).collect::<Vec<_>>(),
+            adj: vec![Vec::new(); v],
         }
     }
 
-    pub fn vertices(&self) -> i32 {
+    pub fn vertices(&self) -> usize {
         self.v
     }
 
@@ -24,21 +24,21 @@ impl Digraph {
         self.e
     }
 
-    fn checked_vertex(&self, vertex: i32) -> i32 {
+    fn checked_vertex(&self, vertex: usize) -> usize {
         assert!(vertex >= 0, format!("Vertex {} must be >= 0", vertex));
         assert!(vertex < self.v, format!("Vertex {} must be < num vertexes ({})", vertex, self.v));
         vertex
     }
 
-    pub fn add_edge(&mut self, v: i32, w: i32) {
-        let from_index = self.checked_vertex(v) as usize;
+    pub fn add_edge(&mut self, v: usize, w: usize) {
+        let from_index = self.checked_vertex(v);
         let checked_index = self.checked_vertex(w);
         self.adj[from_index].push(checked_index);
         self.e += 1;
     }
 
-    pub fn adj(&self, vertex: i32) -> Iter<i32> {
-        let checked_index = self.checked_vertex(vertex) as usize;
+    pub fn adj(&self, vertex: usize) -> Iter<usize> {
+        let checked_index = self.checked_vertex(vertex);
         self.adj[checked_index].iter()
     }
 }
@@ -53,7 +53,7 @@ mod tests {
 
         g.add_edge(0, 1);
 
-        assert_eq!(g.adj(0).cloned().collect::<Vec<_>>(), vec![1i32]);
+        assert_eq!(g.adj(0).cloned().collect::<Vec<_>>(), vec![1]);
     }
 
     #[test]

@@ -87,7 +87,7 @@ impl WordNet {
         Ok(WordNet::create_from_synsets_and_hypernyms(synsets, hypernyms_edges))
     }
 
-    fn create_from_synsets_and_hypernyms(synsets: Vec<Synset>, hypernyms_edges: Vec<(i32, i32)>) -> WordNet {
+    fn create_from_synsets_and_hypernyms(synsets: Vec<Synset>, hypernyms_edges: Vec<(usize, usize)>) -> WordNet {
         let mut nouns_to_synsets = HashMap::new();
         for (synset_id, synset) in synsets.iter().enumerate() {
             for noun in synset.nouns.iter() {
@@ -97,7 +97,7 @@ impl WordNet {
             }
         }
 
-        let mut hypernyms = Digraph::new(synsets.len() as i32);
+        let mut hypernyms = Digraph::new(synsets.len());
         for (a, b) in hypernyms_edges {
             hypernyms.add_edge(a, b);
         }
