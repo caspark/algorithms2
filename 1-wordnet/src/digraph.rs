@@ -37,7 +37,7 @@ impl Digraph {
         self.e += 1;
     }
 
-    fn adj(&self, vertex: i32) -> Iter<i32> {
+    pub fn adj(&self, vertex: i32) -> Iter<i32> {
         let checked_index = self.checked_vertex(vertex) as usize;
         self.adj[checked_index].iter()
     }
