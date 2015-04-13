@@ -8,7 +8,6 @@ pub struct Digraph {
 
 impl Digraph {
     pub fn new(v: usize) -> Digraph {
-        assert!(v >= 0, "number of vertices must be at least zero");
         Digraph {
             v: v,
             e: 0,
@@ -25,7 +24,6 @@ impl Digraph {
     }
 
     fn checked_vertex(&self, vertex: usize) -> usize {
-        assert!(vertex >= 0, format!("Vertex {} must be >= 0", vertex));
         assert!(vertex < self.v, format!("Vertex {} must be < num vertexes ({})", vertex, self.v));
         vertex
     }

@@ -1,4 +1,3 @@
-use std::slice::Iter;
 use bfdp;
 use digraph::Digraph;
 
@@ -52,7 +51,7 @@ mod tests {
 
     #[test]
     fn should_find_shortest_path_in_trivial_case() {
-        let mut g = Digraph::new(1);
+        let g = Digraph::new(1);
 
         assert_eq!(path_stats_between(&g, vec![0], vec![0]), Some((0, 0usize)));
     }
