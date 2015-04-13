@@ -8,7 +8,7 @@ pub struct BfsResult {
     dist_to: Vec<i32>,
 }
 
-pub fn search(g: Digraph, sources: Vec<usize>) -> BfsResult {
+pub fn search(g: &Digraph, sources: Vec<usize>) -> BfsResult {
     let num_vertices = g.vertices() as usize;
     let mut result = BfsResult {
         marked: vec![false; num_vertices],
@@ -80,7 +80,7 @@ mod tests {
         g.add_edge(2, 3);
         g.add_edge(0, 2);
 
-        let result = search(g, vec![0]);
+        let result = search(&g, vec![0]);
 
         assert_eq!(result.path_to(0), Some(vec![0]));
         assert_eq!(result.path_to(1), Some(vec![0, 1]));
@@ -99,7 +99,7 @@ mod tests {
         let mut g = Digraph::new(4);
         g.add_edge(0, 1);
 
-        let result = search(g, vec![0, 2]);
+        let result = search(&g, vec![0, 2]);
 
         assert_eq!(result.path_to(0), Some(vec![0]));
         assert_eq!(result.path_to(1), Some(vec![0, 1]));
