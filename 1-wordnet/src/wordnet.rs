@@ -4,14 +4,14 @@ use digraph::Digraph;
 use sap;
 
 #[derive(PartialEq, Eq, Debug)]
-struct Synset {
+pub struct Synset {
     nouns: Vec<String>,
     gloss: String,
 }
 
 impl Synset {
     // Creates a synset with no gloss.
-    fn new(nouns: Vec<String>) -> Synset {
+    pub fn new(nouns: Vec<String>) -> Synset {
         Synset {
             nouns: nouns,
             gloss: "".to_string(),
@@ -19,7 +19,7 @@ impl Synset {
     }
 }
 
-struct WordNet {
+pub struct WordNet {
     //FIXME "there can be several different synsets that consist of the same noun." which we arlen't supporting here atm
     nouns_to_synsets: HashMap<String, usize>, // usize = the synset id
     synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
@@ -89,7 +89,7 @@ impl WordNet {
         Ok(WordNet::create_from_synsets_and_hypernyms(synsets, hypernyms_edges))
     }
 
-    fn create_from_synsets_and_hypernyms(synsets: Vec<Synset>, hypernyms_edges: Vec<(usize, usize)>) -> WordNet {
+    pub fn create_from_synsets_and_hypernyms(synsets: Vec<Synset>, hypernyms_edges: Vec<(usize, usize)>) -> WordNet {
         let mut nouns_to_synsets = HashMap::new();
         for (synset_id, synset) in synsets.iter().enumerate() {
             for noun in synset.nouns.iter() {
@@ -126,13 +126,13 @@ impl WordNet {
     }
 
     /// Combines the distance and the shortest ancestral path queries of the original assignment spec into 1 function.
-    pub fn relationship(&self, noun_a: &String, noun_b: &String) -> Option<(i32, &Synset)> {
+    pub fn relationship(&self, noun_a: &String, noun_b: &String) -> (i32, &Synset) {
         let synset_id_a = self.nouns_to_synsets.get(noun_a).expect(&format!("noun_a of {} is not a known noun!", noun_a));
         let synset_id_b = self.nouns_to_synsets.get(noun_b).expect(&format!("noun_b of {} is not a known noun!", noun_b));
 
-        sap::path_stats_between(&self.hypernyms, vec![*synset_id_a], vec![*synset_id_b]).map(|(dist, ancestor_id)|
-            (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"))
-        )
+        let (dist, ancestor_id) = sap::path_stats_between(&self.hypernyms, vec![*synset_id_a], vec![*synset_id_b])
+                .expect("wordnet graph must be connected");
+        (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"))
     }
 }
 
@@ -178,14 +178,14 @@ mod tests {
         );
 
         assert_eq!(w.relationship(&"mars".to_string(), &"zeus".to_string()),
-            Some((2, &Synset::new(vec!("god".to_string())) )) );
+            (2, &Synset::new(vec!("god".to_string()))) );
         assert_eq!(w.relationship(&"zeus".to_string(), &"mars".to_string()),
-            Some((2, &Synset::new(vec!("god".to_string())) )) );
+            (2, &Synset::new(vec!("god".to_string()))) );
 
         assert_eq!(w.relationship(&"ares".to_string(), &"zeus".to_string()),
-            Some((2, &Synset::new(vec!("god".to_string())) )) );
+            (2, &Synset::new(vec!("god".to_string()))) );
 
         assert_eq!(w.relationship(&"ares".to_string(), &"god".to_string()),
-            Some((1, &Synset::new(vec!("god".to_string())) )) );
+            (1, &Synset::new(vec!("god".to_string()))) );
     }
 }
