@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
 use digraph::Digraph;
 use sap;
@@ -20,8 +20,7 @@ impl Synset {
 }
 
 pub struct WordNet {
-    //FIXME "there can be several different synsets that consist of the same noun." which we arlen't supporting here atm
-    nouns_to_synsets: HashMap<String, usize>, // usize = the synset id
+    nouns_to_synsets: HashMap<String, HashSet<usize>>, // each usize is the id of a synset which contains this noun
     synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
     hypernyms: Digraph, // indexes = the indexes of the synsets
 }
@@ -103,9 +102,13 @@ impl WordNet {
         let mut nouns_to_synsets = HashMap::new();
         for (synset_id, synset) in synsets.iter().enumerate() {
             for noun in synset.nouns.iter() {
-                //HACK clone the noun rather than worrying about lifetime constraints
-                // (it's inefficient but technically allowed by the instructions)
-                nouns_to_synsets.insert(noun.clone(), synset_id);
+                if !nouns_to_synsets.contains_key(noun) {
+                    //HACK clone the noun rather than worrying about lifetime constraints
+                    // (it's inefficient but technically allowed by the instructions)
+                    nouns_to_synsets.insert(noun.clone(), HashSet::new());
+                }
+
+                nouns_to_synsets.get_mut(noun).expect("set was just added").insert(synset_id);
             }
         }
 
@@ -137,15 +140,15 @@ impl WordNet {
 
     /// Combines the distance and the shortest ancestral path queries of the original assignment spec into 1 function.
     pub fn relationship(&self, noun_a: &String, noun_b: &String) -> (i32, &Synset) {
+        let synsets_for_a = self.nouns_to_synsets.get(noun_a).expect(&format!("noun_a of {} is not a known noun!", noun_a));
+        let synsets_for_b = self.nouns_to_synsets.get(noun_b).expect(&format!("noun_b of {} is not a known noun!", noun_b));
 
-        let synset_id_a = self.nouns_to_synsets.get(noun_a).expect(&format!("noun_a of {} is not a known noun!", noun_a));
-        let synset_id_b = self.nouns_to_synsets.get(noun_b).expect(&format!("noun_b of {} is not a known noun!", noun_b));
-
-        let (dist, ancestor_id) = sap::path_stats_between(&self.hypernyms, vec![*synset_id_a], vec![*synset_id_b])
-                .expect("wordnet graph must be connected");
-        let (dist, ancestor) = (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"));
-        // println!("Common ancestor between {} and {} is {:?} (distance: {})", noun_a, noun_b, ancestor, dist);
-        (dist, ancestor)
+        let (dist, ancestor_id) = sap::path_stats_between(
+            &self.hypernyms,
+            synsets_for_a.iter().cloned().collect(),
+            synsets_for_b.iter().cloned().collect()
+        ).expect("wordnet graph must be connected so there should be a path");
+        (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"))
     }
 }
 
