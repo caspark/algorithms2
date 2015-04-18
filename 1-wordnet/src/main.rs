@@ -29,7 +29,7 @@ fn main() {
         Ok(wordnet) => for outcast_path in args.iter().skip(3) {
             print!("{} ", outcast_path);
             match read_nouns(outcast_path) {
-                Ok(nouns) => println!("outcaust is {} (nouns: {:?})", outcast::find_outcast(&wordnet, &nouns), &nouns),
+                Ok(nouns) => println!("outcast is {} (nouns: {:?})", outcast::find_outcast(&wordnet, &nouns), &nouns),
                 Err(parse_err) => panic!("Cannot read nouns from {}; {}", outcast_path, parse_err),
             }
         },
