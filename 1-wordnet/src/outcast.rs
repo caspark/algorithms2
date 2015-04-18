@@ -13,7 +13,7 @@ fn find_outcast<'n>(wordnet: &WordNet, nouns: &'n Vec<String>) -> &'n String {
                 }
             ).sum::<i32>()
         )
-    ).max_by(|&(noun, dist_from_other_nouns)| dist_from_other_nouns).expect("nouns must not be empty").0
+    ).max_by(|&(_, dist_from_other_nouns)| dist_from_other_nouns).expect("nouns must not be empty").0
 }
 
 #[cfg(test)]

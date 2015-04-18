@@ -19,10 +19,6 @@ impl Digraph {
         self.v
     }
 
-    pub fn edges(&self) -> i32 {
-        self.e
-    }
-
     fn checked_vertex(&self, vertex: usize) -> usize {
         assert!(vertex < self.v, format!("Vertex {} must be < num vertexes ({})", vertex, self.v));
         vertex
