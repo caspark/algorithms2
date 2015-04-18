@@ -27,7 +27,7 @@ pub struct WordNet {
 }
 
 impl WordNet {
-    pub fn create_by_parsing_files(synsets_path: String, hypernyms_path: String) -> io::Result<WordNet> {
+    pub fn create_by_parsing_files(synsets_path: &String, hypernyms_path: &String) -> io::Result<WordNet> {
         use std::io::prelude::*;
         use std::fs::File;
 
@@ -36,9 +36,10 @@ impl WordNet {
         let mut synsets_content = String::new();
         try!(synsets_file.read_to_string(&mut synsets_content));
 
-        let re = regex!(r"(?P<id>\d+),(?P<nouns>.+),(?P<gloss>.+)");
+        print!("Parsing synsets from {}", synsets_path);
+        let re = regex!(r"(?P<id>\d+),(?P<nouns>.+?),(?P<gloss>.+)");
         let mut synsets = Vec::new();
-        for line in synsets_content.split("\n").skip(1) {
+        for (i, line) in synsets_content.split("\n").enumerate() {
             if line.len() == 0 {
                 break; // end of file
             }
@@ -53,7 +54,7 @@ impl WordNet {
                     gloss =<< caps.name("gloss");
                     ret ret((id, Synset {
                         nouns: nouns.split(" ").map(|s| s.to_string()).collect::<Vec<_>>(),
-                        gloss: gloss.to_string()
+                        gloss: gloss.to_string(),
                     }))
                 }
             };
@@ -63,15 +64,20 @@ impl WordNet {
             } else {
                 panic!("Failed to parse line '{}'", line)
             }
+            if i % 1000 == 0 {
+                print!(".");
+            }
         }
+        println!("done!");
 
         // parse hypernyms
         let mut hypernyms_file = try!(File::open(hypernyms_path));
         let mut hypernyms_content = String::new();
         try!(hypernyms_file.read_to_string(&mut hypernyms_content));
 
+        print!("Parsing hypernyms from {}", hypernyms_path);
         let mut hypernyms_edges = Vec::new();
-        for line in hypernyms_content.split("\n").skip(1) {
+        for (i, line) in hypernyms_content.split("\n").enumerate() {
             if line.len() == 0 {
                 break; // end of file
             }
@@ -84,7 +90,11 @@ impl WordNet {
                     Some(synset_id) => hypernyms_edges.push((synset_id, id)),
                 }
             }
+            if i % 1000 == 0 {
+                print!(".");
+            }
         }
+        println!("done!");
 
         Ok(WordNet::create_from_synsets_and_hypernyms(synsets, hypernyms_edges))
     }
@@ -127,12 +137,15 @@ impl WordNet {
 
     /// Combines the distance and the shortest ancestral path queries of the original assignment spec into 1 function.
     pub fn relationship(&self, noun_a: &String, noun_b: &String) -> (i32, &Synset) {
+
         let synset_id_a = self.nouns_to_synsets.get(noun_a).expect(&format!("noun_a of {} is not a known noun!", noun_a));
         let synset_id_b = self.nouns_to_synsets.get(noun_b).expect(&format!("noun_b of {} is not a known noun!", noun_b));
 
         let (dist, ancestor_id) = sap::path_stats_between(&self.hypernyms, vec![*synset_id_a], vec![*synset_id_b])
                 .expect("wordnet graph must be connected");
-        (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"))
+        let (dist, ancestor) = (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"));
+        // println!("Common ancestor between {} and {} is {:?} (distance: {})", noun_a, noun_b, ancestor, dist);
+        (dist, ancestor)
     }
 }
 

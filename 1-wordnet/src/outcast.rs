@@ -1,17 +1,21 @@
 use wordnet::WordNet;
 
 /// Find which of the given nouns is least related to any other nouns according to the given wordnet.
-fn find_outcast<'n>(wordnet: &WordNet, nouns: &'n Vec<String>) -> &'n String {
+pub fn find_outcast<'n>(wordnet: &WordNet, nouns: &'n Vec<String>) -> &'n String {
     nouns.iter().map(|noun|
         (
             noun,
-            nouns.iter().map(|other_noun|
-                if noun != other_noun {
-                    wordnet.relationship(&noun, &other_noun).0
-                } else {
-                    0
-                }
-            ).sum::<i32>()
+            {
+                let dist = nouns.iter().map(|other_noun|
+                    if noun != other_noun {
+                        wordnet.relationship(&noun, &other_noun).0
+                    } else {
+                        0
+                    }
+                ).sum::<i32>();
+                // println!("Distance for {} = {}", noun, dist);
+                dist
+            }
         )
     ).max_by(|&(_, dist_from_other_nouns)| dist_from_other_nouns).expect("nouns must not be empty").0
 }
