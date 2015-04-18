@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::io;
 use digraph::Digraph;
+use sap;
 
+#[derive(PartialEq, Eq, Debug)]
 struct Synset {
     nouns: Vec<String>,
     gloss: String,
@@ -18,7 +20,7 @@ impl Synset {
 }
 
 struct WordNet {
-    //FIXME "there can be several different synsets that consist of the same noun." which we aren't supporting here atm
+    //FIXME "there can be several different synsets that consist of the same noun." which we arlen't supporting here atm
     nouns_to_synsets: HashMap<String, usize>, // usize = the synset id
     synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
     hypernyms: Digraph, // indexes = the indexes of the synsets
@@ -123,18 +125,14 @@ impl WordNet {
         self.nouns_to_synsets.contains_key(word)
     }
 
-    pub fn distance(&self, noun_a: &String, noun_b: &String) -> i32 {
-        assert!(self.is_noun(noun_a), format!("noun_a of {} is not a known noun!", noun_a));
-        assert!(self.is_noun(noun_b), format!("noun_b of {} is not a known noun!", noun_b));
+    /// Combines the distance and the shortest ancestral path queries of the original assignment spec into 1 function.
+    pub fn relationship(&self, noun_a: &String, noun_b: &String) -> Option<(i32, &Synset)> {
+        let synset_id_a = self.nouns_to_synsets.get(noun_a).expect(&format!("noun_a of {} is not a known noun!", noun_a));
+        let synset_id_b = self.nouns_to_synsets.get(noun_b).expect(&format!("noun_b of {} is not a known noun!", noun_b));
 
-        panic!("Not implemented");
-    }
-
-    pub fn sap(&self, noun_a: &String, noun_b: &String) -> Synset {
-        assert!(self.is_noun(noun_a), format!("noun_a of {} is not a known noun!", noun_a));
-        assert!(self.is_noun(noun_b), format!("noun_b of {} is not a known noun!", noun_b));
-
-        panic!("Not implemented");
+        sap::path_stats_between(&self.hypernyms, vec![*synset_id_a], vec![*synset_id_b]).map(|(dist, ancestor_id)|
+            (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"))
+        )
     }
 }
 
@@ -163,5 +161,31 @@ mod tests {
         assert!(w.is_noun(&"hound".to_string()));
         assert!(w.is_noun(&"god".to_string()));
         assert!(!w.is_noun(&"cat".to_string()));
+    }
+
+    #[test]
+    fn should_be_able_to_calculate_relationship_between_nouns() {
+        let w = WordNet::create_from_synsets_and_hypernyms(
+            vec!(
+                Synset::new(vec!("mars".to_string(), "ares".to_string())),
+                Synset::new(vec!("god".to_string())),
+                Synset::new(vec!("zeus".to_string()))
+            ),
+            vec![
+                (0, 1), // mars and ares are gods
+                (2, 1), // zeus is a god
+            ]
+        );
+
+        assert_eq!(w.relationship(&"mars".to_string(), &"zeus".to_string()),
+            Some((2, &Synset::new(vec!("god".to_string())) )) );
+        assert_eq!(w.relationship(&"zeus".to_string(), &"mars".to_string()),
+            Some((2, &Synset::new(vec!("god".to_string())) )) );
+
+        assert_eq!(w.relationship(&"ares".to_string(), &"zeus".to_string()),
+            Some((2, &Synset::new(vec!("god".to_string())) )) );
+
+        assert_eq!(w.relationship(&"ares".to_string(), &"god".to_string()),
+            Some((1, &Synset::new(vec!("god".to_string())) )) );
     }
 }
