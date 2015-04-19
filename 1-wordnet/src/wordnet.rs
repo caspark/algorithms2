@@ -28,17 +28,16 @@ pub struct WordNet {
 
 impl WordNet {
     pub fn create_by_parsing_files(synsets_path: &String, hypernyms_path: &String) -> io::Result<WordNet> {
+        use std::io::BufReader;
         use std::io::prelude::*;
         use std::fs::File;
 
-        // parse synsets
-        let mut synsets_file = try!(File::open(synsets_path));
-        let mut synsets_content = String::new();
-        try!(synsets_file.read_to_string(&mut synsets_content));
-
         print!("Parsing synsets from {}", synsets_path);
-        let mut synsets = Vec::new();
-        for (i, line) in synsets_content.split("\n").enumerate() {
+        let synsets_file = BufReader::new(try!(File::open(synsets_path)));
+        let mut synsets = Vec::with_capacity(100000);
+        for line_or_err in synsets_file.lines() {
+            let line = line_or_err.unwrap();
+
             if line.len() == 0 {
                 break; // end of file
             }
@@ -57,20 +56,20 @@ impl WordNet {
             synsets.push(synset);
             assert_eq!(synset_id, synsets.len() - 1);
 
-            if i % 1000 == 0 {
+            if synset_id % 1000 == 0 {
                 print!(".");
             }
         }
         println!("done!");
 
         // parse hypernyms
-        let mut hypernyms_file = try!(File::open(hypernyms_path));
-        let mut hypernyms_content = String::new();
-        try!(hypernyms_file.read_to_string(&mut hypernyms_content));
-
         print!("Parsing hypernyms from {}", hypernyms_path);
-        let mut hypernyms_edges = Vec::new();
-        for (i, line) in hypernyms_content.split("\n").enumerate() {
+        let hypernyms_file = BufReader::new(try!(File::open(hypernyms_path)));
+
+        let mut hypernyms_edges = Vec::with_capacity(100000);
+        for (i, line_or_err) in hypernyms_file.lines().enumerate() {
+            let line = line_or_err.unwrap();
+
             if line.len() == 0 {
                 break; // end of file
             }
