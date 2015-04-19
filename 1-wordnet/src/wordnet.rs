@@ -1,3 +1,4 @@
+use std::borrow::ToOwned;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use digraph::Digraph;
@@ -36,33 +37,26 @@ impl WordNet {
         try!(synsets_file.read_to_string(&mut synsets_content));
 
         print!("Parsing synsets from {}", synsets_path);
-        let re = regex!(r"(?P<id>\d+),(?P<nouns>.+?),(?P<gloss>.+)");
         let mut synsets = Vec::new();
         for (i, line) in synsets_content.split("\n").enumerate() {
             if line.len() == 0 {
                 break; // end of file
             }
 
-            let parsed = {
-                use mdo::option::{bind, ret};
-                mdo! {
-                    caps =<< re.captures(line).as_ref();
-                    id_str =<< caps.name("id");
-                    id =<< id_str.parse::<usize>().ok();
-                    nouns =<< caps.name("nouns");
-                    gloss =<< caps.name("gloss");
-                    ret ret((id, Synset {
-                        nouns: nouns.split(" ").map(|s| s.to_string()).collect::<Vec<_>>(),
-                        gloss: gloss.to_string(),
-                    }))
-                }
+            let (synset_id, synset) = {
+                let columns = &mut line.splitn(3, ",");
+                let id = columns.next().expect("synset must have id").parse::<usize>().ok().expect("synset id must be an int");
+                let nouns = columns.next().expect("synset must have nouns");
+                let gloss = columns.next().unwrap_or("").to_owned();
+                (id, Synset {
+                        nouns: nouns.split(" ").map(|s| s.to_owned()).collect::<Vec<_>>(),
+                        gloss: gloss,
+                    }
+                )
             };
-            if let Some((synset_id, synset)) = parsed {
-                synsets.push(synset);
-                assert_eq!(synset_id, synsets.len() - 1);
-            } else {
-                panic!("Failed to parse line '{}'", line)
-            }
+            synsets.push(synset);
+            assert_eq!(synset_id, synsets.len() - 1);
+
             if i % 1000 == 0 {
                 print!(".");
             }
