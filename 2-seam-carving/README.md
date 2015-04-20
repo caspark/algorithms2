@@ -10,3 +10,9 @@ image is of the desired dimensions.
 * Sample inputs: http://coursera.cs.princeton.edu/algs4/testing/seamCarving-testing.zip
 
 **Currently incomplete**
+
+Sample execution:
+
+```
+cargo run -- seamCarving-testing/HJocean.png output.png
+```
