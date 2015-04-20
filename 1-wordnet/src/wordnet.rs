@@ -131,17 +131,18 @@ impl WordNet {
         self.nouns_to_synsets.contains_key(word)
     }
 
-    /// Combines the distance and the shortest ancestral path queries of the original assignment spec into 1 function.
-    pub fn relationship(&self, noun_a: &String, noun_b: &String) -> (i32, &Synset) {
+    /// Get the distance between the given 2 nouns.
+    /// Originally this calculated the common ancestor too, but that was unnecessary for wordnet so removed it for speed
+    /// reasons. See code at the tag 1-wordnet-1.0 for that.
+    pub fn relationship(&self, noun_a: &String, noun_b: &String) -> i32 {
         let synsets_for_a = self.nouns_to_synsets.get(noun_a).expect(&format!("noun_a of {} is not a known noun!", noun_a));
         let synsets_for_b = self.nouns_to_synsets.get(noun_b).expect(&format!("noun_b of {} is not a known noun!", noun_b));
 
-        let (dist, ancestor_id) = sap::path_stats_between(
+        sap::path_stats_between(
             &self.hypernyms,
             synsets_for_a.iter().cloned().collect(),
             synsets_for_b.iter().cloned().collect()
-        ).expect("wordnet graph must be connected so there should be a path");
-        (dist, self.synsets.get(ancestor_id).expect("found ancestor should be a known synset"))
+        ).expect("wordnet graph must be connected so there should be a path")
     }
 }
 
@@ -187,14 +188,14 @@ mod tests {
         );
 
         assert_eq!(w.relationship(&"mars".to_string(), &"zeus".to_string()),
-            (2, &Synset::new(vec!("god".to_string()))) );
+            2);
         assert_eq!(w.relationship(&"zeus".to_string(), &"mars".to_string()),
-            (2, &Synset::new(vec!("god".to_string()))) );
+            2);
 
         assert_eq!(w.relationship(&"ares".to_string(), &"zeus".to_string()),
-            (2, &Synset::new(vec!("god".to_string()))) );
+            2);
 
         assert_eq!(w.relationship(&"ares".to_string(), &"god".to_string()),
-            (1, &Synset::new(vec!("god".to_string()))) );
+            1);
     }
 }

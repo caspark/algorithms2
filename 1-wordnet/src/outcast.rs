@@ -8,9 +8,7 @@ pub fn find_outcast<'n>(wordnet: &WordNet, nouns: &'n Vec<String>) -> &'n String
             {
                 let dist = nouns.iter().map(|other_noun|
                     if noun != other_noun {
-                        let (dist, _) = wordnet.relationship(&noun, &other_noun);
-                        // println!("{} and {} have ancestor {} away of {:?}", noun, other_noun, dist, ancestor);
-                        dist
+                        wordnet.relationship(&noun, &other_noun)
                     } else {
                         0
                     }

@@ -2,9 +2,9 @@ use bfdp;
 use digraph::Digraph;
 
 /// Calculates the shortest ancestral path between vertices of a digraph.
-/// Returns the common ancestor closest to both points and the distance (number of edges between
-// those two points when taking the path that passes through the common ancestor.
-pub fn path_stats_between(g: &Digraph, vs: Vec<usize>, ws: Vec<usize>) -> Option<(i32, usize)> {
+/// Returns the distance - number of edges between those two points when taking the path that passes through the common
+/// ancestor.
+pub fn path_stats_between(g: &Digraph, vs: Vec<usize>, ws: Vec<usize>) -> Option<i32> {
     let vs_result = bfdp::search(g, vs);
     let ws_result = bfdp::search(g, ws);
 
@@ -14,21 +14,21 @@ pub fn path_stats_between(g: &Digraph, vs: Vec<usize>, ws: Vec<usize>) -> Option
     //     if this total is the best we've seen so far, save the vertex as the new best common ancestor
     // Then return sum the lengths of the path from v -> common ancestor + w -> common ancestor
 
-    let mut best_paths = None;
+    let mut best_path = None;
     for target in 0..g.vertices() {
-        let target_paths = (vs_result.path_to(target), ws_result.path_to(target));
+        let target_paths = (vs_result.dist_to(target), ws_result.dist_to(target));
         match target_paths {
             (Some(v_tp), Some(w_tp)) => {
                 //HACK this code is ugly as sin but I've yet to convince the borrow checker that
                 //     there exists a nicer yet still legal way to express the same thing.
-                if best_paths.is_none() {
-                    best_paths = Some((v_tp, w_tp));
+                if best_path.is_none() {
+                    best_path = Some(v_tp + w_tp);
                 } else {
-                    let (v_bp, w_bp) = best_paths.expect("previously checked");
-                    if v_tp.len() + w_tp.len() < v_bp.len() + w_bp.len() {
-                        best_paths = Some((v_tp, w_tp));
+                    let best_path_len = best_path.expect("previously checked");
+                    if v_tp + w_tp < best_path_len {
+                        best_path = Some(v_tp + w_tp);
                     } else {
-                        best_paths = Some((v_bp, w_bp));
+                        best_path = Some(best_path_len);
                     }
                 }
             },
@@ -36,12 +36,7 @@ pub fn path_stats_between(g: &Digraph, vs: Vec<usize>, ws: Vec<usize>) -> Option
         }
     }
 
-    best_paths.map(|(v_bp, w_bp)| {
-        (
-            (v_bp.len() + w_bp.len() - 2) as i32, // path length
-            v_bp.last().expect("paths must have at least 1 element").clone() // common ancestor
-        )
-    })
+    best_path.map(|bp| bp as i32)
 }
 
 #[cfg(test)]
@@ -53,7 +48,7 @@ mod tests {
     fn should_find_shortest_path_in_trivial_case() {
         let g = Digraph::new(1);
 
-        assert_eq!(path_stats_between(&g, vec![0], vec![0]), Some((0, 0usize)));
+        assert_eq!(path_stats_between(&g, vec![0], vec![0]), Some(0));
     }
 
     #[test]
@@ -65,7 +60,7 @@ mod tests {
         g.add_edge(1, 2);
         g.add_edge(0, 2);
 
-        assert_eq!(path_stats_between(&g, vec![0], vec![2]), Some((1, 2usize)));
+        assert_eq!(path_stats_between(&g, vec![0], vec![2]), Some(1));
     }
 
     #[test]
@@ -76,7 +71,7 @@ mod tests {
         g.add_edge(0, 2);
         g.add_edge(1, 2);
 
-        assert_eq!(path_stats_between(&g, vec![0], vec![1]), Some((2, 2usize)));
+        assert_eq!(path_stats_between(&g, vec![0], vec![1]), Some(2));
     }
 
     #[test]
@@ -93,6 +88,6 @@ mod tests {
         g.add_edge(7, 5);
         g.add_edge(8, 7);
 
-        assert_eq!(path_stats_between(&g, vec![0, 3], vec![6, 8]), Some((4, 2usize)));
+        assert_eq!(path_stats_between(&g, vec![0, 3], vec![6, 8]), Some(4));
     }
 }
