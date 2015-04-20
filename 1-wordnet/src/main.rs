@@ -45,5 +45,5 @@ fn read_nouns(path: &String) -> std::io::Result<Vec<String>> {
     use std::fs::File;
 
     let file = BufReader::new(try!(File::open(path)));
-    Ok(file.lines().map(|s| s.unwrap()).collect())
+    Ok(file.lines().map(|s| s.unwrap()).filter(|s| s.len() > 0).collect())
 }
