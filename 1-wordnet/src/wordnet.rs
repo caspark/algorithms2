@@ -7,7 +7,6 @@ use sap;
 #[derive(PartialEq, Eq, Debug)]
 pub struct Synset {
     nouns: Vec<String>,
-    gloss: String,
 }
 
 impl Synset {
@@ -15,15 +14,13 @@ impl Synset {
     pub fn new(nouns: Vec<String>) -> Synset {
         Synset {
             nouns: nouns,
-            gloss: "".to_string(),
         }
     }
 }
 
 pub struct WordNet {
     nouns_to_synsets: HashMap<String, HashSet<usize>>, // each usize is the id of a synset which contains this noun
-    synsets: Vec<Synset>, // ordered by id; synset with synset id 0 is at position 0
-    hypernyms: Digraph, // indexes = the indexes of the synsets
+    hypernyms: Digraph, // index = the id of the synset
 }
 
 impl WordNet {
@@ -46,10 +43,8 @@ impl WordNet {
                 let columns = &mut line.splitn(3, ",");
                 let id = columns.next().expect("synset must have id").parse::<usize>().ok().expect("synset id must be an int");
                 let nouns = columns.next().expect("synset must have nouns");
-                let gloss = columns.next().unwrap_or("").to_owned();
                 (id, Synset {
                         nouns: nouns.split(" ").map(|s| s.to_owned()).collect::<Vec<_>>(),
-                        gloss: gloss,
                     }
                 )
             };
@@ -112,19 +107,12 @@ impl WordNet {
 
         WordNet {
             nouns_to_synsets: nouns_to_synsets,
-            synsets: synsets,
             hypernyms: hypernyms,
         }
     }
 
     pub fn nouns(&self) -> Vec<&String> {
-        let mut all_nouns = Vec::new();
-        for synset in self.synsets.iter() {
-            for noun in synset.nouns.iter() {
-                all_nouns.push(noun);
-            }
-        }
-        all_nouns
+        self.nouns_to_synsets.keys().collect()
     }
 
     pub fn is_noun(&self, word: &String) -> bool {
