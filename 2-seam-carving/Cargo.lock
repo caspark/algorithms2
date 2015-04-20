@@ -1,0 +1,20 @@
+[root]
+name = "2-seam-carving"
+version = "0.1.0"
+dependencies = [
+ "lodepng 0.4.0 (git+https://github.com/pornel/lodepng-rust.git)",
+]
+
+[[package]]
+name = "c_vec"
+version = "1.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "lodepng"
+version = "0.4.0"
+source = "git+https://github.com/pornel/lodepng-rust.git#a30d0fb90ac2dff7d59564b9b390f2f634a561a7"
+dependencies = [
+ "c_vec 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
