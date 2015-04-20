@@ -9,7 +9,7 @@ pub struct BfsResult {
 }
 
 pub fn search(g: &Digraph, sources: Vec<usize>) -> BfsResult {
-    let num_vertices = g.vertices() as usize;
+    let num_vertices = g.vertices();
     let mut result = BfsResult {
         marked: vec![false; num_vertices],
         edge_to: vec![<usize>::max_value(); num_vertices],
