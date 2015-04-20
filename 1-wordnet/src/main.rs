@@ -40,11 +40,10 @@ fn main() {
 }
 
 fn read_nouns(path: &String) -> std::io::Result<Vec<String>> {
+    use std::io::BufReader;
     use std::io::prelude::*;
     use std::fs::File;
 
-    let mut file = try!(File::open(path));
-    let mut file_contents = String::new();
-    try!(file.read_to_string(&mut file_contents));
-    Ok(file_contents.split("\n").filter(|s| s.len() > 0).map(|s| s.to_string()).collect())
+    let file = BufReader::new(try!(File::open(path)));
+    Ok(file.lines().map(|s| s.unwrap()).collect())
 }
