@@ -1,11 +1,4 @@
 #![feature(core)] // allows using sum() on iterators
-#![feature(plugin)]
-
-#![plugin(regex_macros)]
-extern crate regex;
-
-#[macro_use]
-extern crate mdo;
 
 use std::env;
 use wordnet::WordNet;
