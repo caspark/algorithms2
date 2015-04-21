@@ -26,11 +26,13 @@ fn main() {
     println!("Decoded {} x {} image at {}", bitmap.width, bitmap.height,
         input_img_path.to_str().expect("path should be valid"));
 
-    //TODO do some processing that's more relevant to the spec
-    println!("Decreasing red by 75% and green by 50% (image should be more blue)");
-    for pixel in bitmap.buffer.as_mut().iter_mut() {
-        pixel.r = pixel.r / 4 % 255;
-        pixel.g = pixel.g / 2 % 255;
+    println!("Calculating pixel energies...");
+    let energies = carving::calculate_energy(bitmap.width, bitmap.height, bitmap.buffer.as_mut());
+    for (pixel, energy) in bitmap.buffer.as_mut().iter_mut().zip(energies.iter()) {
+        let relative_energy = (energy / carving::MAX_PIXEL_ENERGY * 255.0) as u8;
+        pixel.r = relative_energy;
+        pixel.g = relative_energy;
+        pixel.b = relative_energy;
     }
 
     if let Err(e) = lodepng::encode24_file(output_img_path, bitmap.buffer.as_ref(), bitmap.width, bitmap.height) {
