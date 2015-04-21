@@ -5,6 +5,8 @@ use std::path::Path;
 use std::convert::AsMut;
 use std::convert::AsRef;
 
+mod carving;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let usage = format!("Usage: {} <path-to-input-png> <output-path>", args[0]);
