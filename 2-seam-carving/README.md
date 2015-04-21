@@ -14,5 +14,5 @@ image is of the desired dimensions.
 Sample execution:
 
 ```
-cargo run -- seamCarving-testing/HJocean.png output.png
+cargo run -- seamCarving-testing/HJocean.png /tmp/output.png && xdg-open /tmp/output.png
 ```
