@@ -1,6 +1,7 @@
 extern crate getopts;
 extern crate lodepng;
 
+use carving::Carver;
 use getopts::Options;
 use std::env;
 use std::path::Path;
@@ -63,7 +64,8 @@ fn main() {
 
     if verbose_mode { println!("Calculating pixel energies..."); }
     let mut energies = carving::calculate_energy(bitmap.width, bitmap.height, bitmap.buffer.as_mut());
-    let mut seam = carving::find_seam(bitmap.width, &energies);
+    let mut carver = Carver::new(bitmap.buffer.len());
+    let mut seam = carver.find_seam(bitmap.width, &energies);
 
     print!("Reducing width of image by {} pixels", width_reduction);
     for _ in 0..width_reduction {
@@ -81,7 +83,7 @@ fn main() {
         if verbose_mode { println!("Recalculating pixel energies..."); }
         energies = carving::calculate_energy(bitmap.width, bitmap.height, image_pixels);
         if verbose_mode { println!("Finding next seam..."); }
-        seam = carving::find_seam(bitmap.width, &energies);
+        seam = carver.find_seam(bitmap.width, &energies);
 
         if !verbose_mode {
             use std::io::{self, Write};
