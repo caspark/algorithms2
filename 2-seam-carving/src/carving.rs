@@ -1,11 +1,10 @@
 use lodepng::RGB;
-use std::f32;
+use std::i32;
 
 // as indicated by the spec, this is the energy of a complete standout pixel, and is also used for pixels on the edge.
-pub const MAX_PIXEL_ENERGY: f32 = 255f32 * 255.0 * 3.0;
+pub const MAX_PIXEL_ENERGY: i32 = 255 * 255 * 3;
 
-//TODO spec records energy as f32 but I don't yet see why we can't just use i32
-pub fn calculate_energy(width: usize, height: usize, pixels: &[RGB<u8>]) -> Vec<f32> {
+pub fn calculate_energy(width: usize, height: usize, pixels: &[RGB<u8>]) -> Vec<i32> {
     let mut pixel_energies = Vec::with_capacity(width * height);
     for i in 0 .. (width * height) {
         let energy = if i < width { // first row
@@ -20,13 +19,13 @@ pub fn calculate_energy(width: usize, height: usize, pixels: &[RGB<u8>]) -> Vec<
             let energy_x = {
                 let x1 = pixels[i - 1];
                 let x2 = pixels[i + 1];
-                (x1.r as f32 - x2.r as f32).powi(2) + (x1.g as f32 - x2.g as f32).powi(2) + (x1.b as f32 - x2.b  as f32).powi(2)
+                (x1.r as i32 - x2.r as i32).pow(2) + (x1.g as i32 - x2.g as i32).pow(2) + (x1.b as i32 - x2.b  as i32).pow(2)
             };
 
             let energy_y = {
                 let y1 = pixels[i - width];
                 let y2 = pixels[i + width];
-                (y1.r as f32 - y2.r as f32).powi(2) + (y1.g as f32 - y2.g as f32).powi(2) + (y1.b as f32 - y2.b as f32).powi(2)
+                (y1.r as i32 - y2.r as i32).pow(2) + (y1.g as i32 - y2.g as i32).pow(2) + (y1.b as i32 - y2.b as i32).pow(2)
             };
 
             (energy_x + energy_y)
@@ -40,7 +39,7 @@ pub fn calculate_energy(width: usize, height: usize, pixels: &[RGB<u8>]) -> Vec<
 
 /// To avoid repeated allocations, 1 carver can be created and reused indefinitely for the same image.
 pub struct Carver {
-    dist_to: Vec<f32>,
+    dist_to: Vec<i32>, // should be ok recording distances as i32 as long as path is less than 20,000 pixels long
     prev_vertex: Vec<usize>, // records the path back in terms of vertices rather than edges (edge_to)
 }
 
@@ -53,17 +52,17 @@ impl Carver {
         // - each pixel in the last row has an edge to a fake destination pixel
         let vertex_count = num_pixels + 2;
         Carver {
-            dist_to: vec![f32::INFINITY; vertex_count],
+            dist_to: vec![i32::max_value(); vertex_count],
             prev_vertex: vec![0; vertex_count],
         }
     }
 
-    pub fn find_seam(&mut self, width: usize, pixel_energies: &Vec<f32>) -> Vec<usize> {
+    pub fn find_seam(&mut self, width: usize, pixel_energies: &Vec<i32>) -> Vec<usize> {
         let fake_src = pixel_energies.len();
         let fake_dest = pixel_energies.len() + 1;
 
         for i in 0..(pixel_energies.len() + 2) {
-            self.dist_to[i] = f32::INFINITY;
+            self.dist_to[i] = i32::max_value();
             self.prev_vertex[i] = 0;
         }
 
@@ -133,8 +132,8 @@ mod tests {
 
         assert_eq!(pixel_energies, vec!(
             MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY,
-            MAX_PIXEL_ENERGY, 52225.0,          MAX_PIXEL_ENERGY,
-            MAX_PIXEL_ENERGY, 52024.0,          MAX_PIXEL_ENERGY,
+            MAX_PIXEL_ENERGY, 52225,            MAX_PIXEL_ENERGY,
+            MAX_PIXEL_ENERGY, 52024,            MAX_PIXEL_ENERGY,
             MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY,
         ));
     }
@@ -143,15 +142,15 @@ mod tests {
     fn finds_seam_as_given_in_example_in_spec() {
         let pixel_energies = vec!(
             MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY,
-            MAX_PIXEL_ENERGY, 23346.0,          51304.0,          31519.0,          55112.0,          MAX_PIXEL_ENERGY,
-            MAX_PIXEL_ENERGY, 47908.0,          61346.0,          35919.0,          38887.0,          MAX_PIXEL_ENERGY,
-            MAX_PIXEL_ENERGY, 31400.0,          37927.0,          14437.0,          63076.0,          MAX_PIXEL_ENERGY,
+            MAX_PIXEL_ENERGY, 23346,            51304,            31519,            55112,            MAX_PIXEL_ENERGY,
+            MAX_PIXEL_ENERGY, 47908,            61346,            35919,            38887,            MAX_PIXEL_ENERGY,
+            MAX_PIXEL_ENERGY, 31400,            37927,            14437,            63076,            MAX_PIXEL_ENERGY,
             MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY,
         );
 
         let seam = Carver::new(pixel_energies.len()).find_seam(6, &pixel_energies);
 
-        // expecting a seam of MAX_PIXEL_ENERGY, 31519.0, 35919.0, 14437.0, MAX_PIXEL_ENERGY in the following pattern:
+        // expecting a seam of MAX_PIXEL_ENERGY, 31519, 35919, 14437, MAX_PIXEL_ENERGY in the following pattern:
         // --  --  2   --  --  --
         // --  --  --  9   --  --
         // --  --  --  15  --  --

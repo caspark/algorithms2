@@ -96,7 +96,7 @@ fn main() {
     if output_energy {
         println!("Converting image to display its energies");
         for (pixel, energy) in bitmap.buffer.as_mut().iter_mut().zip(energies.iter()) {
-            let relative_energy = (energy / carving::MAX_PIXEL_ENERGY * 255.0) as u8;
+            let relative_energy = (energy / carving::MAX_PIXEL_ENERGY * 255) as u8;
             pixel.r = relative_energy;
             pixel.g = relative_energy;
             pixel.b = relative_energy;
