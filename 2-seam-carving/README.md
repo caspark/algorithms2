@@ -9,9 +9,10 @@ image is of the desired dimensions.
 * FAQ: http://coursera.cs.princeton.edu/algs4/checklists/seamCarving.html
 * Sample inputs: http://coursera.cs.princeton.edu/algs4/testing/seamCarving-testing.zip
 
-**Currently incomplete**
+Approximately complete; reducing vertical size isn't implemented but can be done easily enough by transposing the image
+first.
 
-Sample execution:
+Sample execution which reduces the width of the input image by 200 pixels:
 
 ```
 cargo run --release -- seamCarving-testing/HJocean.png -o /tmp/output.png -W 200 && pinta /tmp/output.png &> /dev/null
