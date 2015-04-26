@@ -3,5 +3,8 @@ name = "2-seam-carving"
 version = "0.1.0"
 authors = ["Caspar Krieger <caspar@asparck.com>"]
 
+[dependencies]
+getopts = "*"
+
 [dependencies.lodepng]
 git = "https://github.com/pornel/lodepng-rust.git"
