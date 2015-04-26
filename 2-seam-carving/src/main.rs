@@ -63,9 +63,9 @@ fn main() {
         input_img_path.to_str().expect("path should be valid"));
 
     if verbose_mode { println!("Calculating pixel energies..."); }
-    let mut energies = carving::calculate_energy(bitmap.width, bitmap.height, bitmap.buffer.as_mut());
     let mut carver = Carver::new(bitmap.buffer.len());
-    let mut seam = carver.find_seam(bitmap.width, &energies);
+    carver.calculate_energy(bitmap.width, bitmap.height, bitmap.buffer.as_mut());
+    let mut seam = carver.find_seam(bitmap.width, bitmap.height);
 
     print!("Reducing width of image by {} pixels", width_reduction);
     for _ in 0..width_reduction {
@@ -73,17 +73,17 @@ fn main() {
             println!("");
             println!("Will remove seam: {:?}", seam);
             println!("As energy:        {:?}", seam.iter().map(|seam_pixel_index|
-                energies[*seam_pixel_index]).collect::<Vec<_>>());
+                carver.energy[*seam_pixel_index]).collect::<Vec<_>>());
         }
 
-        let image_pixels = bitmap.buffer.as_mut();
-        lazy_remove_indexes_of(image_pixels, &seam);
+        lazy_remove_indexes_of(subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height), &seam);
         bitmap.width = bitmap.width - 1;
 
         if verbose_mode { println!("Recalculating pixel energies..."); }
-        energies = carving::calculate_energy(bitmap.width, bitmap.height, image_pixels);
+        carver.calculate_energy(bitmap.width, bitmap.height,
+            subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height));
         if verbose_mode { println!("Finding next seam..."); }
-        seam = carver.find_seam(bitmap.width, &energies);
+        seam = carver.find_seam(bitmap.width, bitmap.height);
 
         if !verbose_mode {
             use std::io::{self, Write};
@@ -95,7 +95,8 @@ fn main() {
 
     if output_energy {
         println!("Converting image to display its energies");
-        for (pixel, energy) in bitmap.buffer.as_mut().iter_mut().zip(energies.iter()) {
+        for (pixel, energy) in subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height)
+                .iter_mut().zip(carver.energy.iter()) {
             let relative_energy = (energy / carving::MAX_PIXEL_ENERGY * 255) as u8;
             pixel.r = relative_energy;
             pixel.g = relative_energy;
@@ -107,11 +108,11 @@ fn main() {
         if verbose_mode {
             println!("Seam found for preview: {:?}", seam);
             println!("As energy for preview:  {:?}", seam.iter().map(|seam_pixel_index|
-                energies[*seam_pixel_index]).collect::<Vec<_>>());
+                carver.energy[*seam_pixel_index]).collect::<Vec<_>>());
         }
 
         println!("Updating image with preview (in red) of next seam that would be removed");
-        let image_pixels = bitmap.buffer.as_mut();
+        let image_pixels = subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height);
         for pixel_index in seam {
             image_pixels[pixel_index].r = 255;
             image_pixels[pixel_index].g = 0;
@@ -124,7 +125,7 @@ fn main() {
             let output_img_path = &Path::new(&output_img_str);
 
             // image could be smaller now, so make sure we don't try to save more pixels than we have space for
-            let portion_to_save = &bitmap.buffer.as_ref()[..(bitmap.width * bitmap.height)];
+            let portion_to_save = subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height);
 
             if let Err(e) = lodepng::encode24_file(output_img_path, portion_to_save, bitmap.width, bitmap.height) {
                 panic!("Failed to save png to {} because: {}", output_img_str, e);
@@ -134,6 +135,10 @@ fn main() {
         },
         None => println!("Not saving output image; specify -o flag if you want to save the result"),
     };
+}
+
+fn subset_by_width_and_height<A>(slice: &mut [A], width: usize, height: usize) -> &mut [A] {
+    &mut slice[..(width * height)]
 }
 
 /// For each index `A` of `to_remove` into `slice`, set `slice[A] = slice[A + 1]`. The last `to_remove.len()` items in
