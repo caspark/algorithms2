@@ -14,5 +14,7 @@ image is of the desired dimensions.
 Sample execution:
 
 ```
-cargo run -- seamCarving-testing/HJocean.png /tmp/output.png && xdg-open /tmp/output.png
+cargo run --release -- seamCarving-testing/HJocean.png -o /tmp/output.png -W 200 && pinta /tmp/output.png &> /dev/null
 ```
+
+Also try `-e` to show calculated energy and `-p` to show the preview of the next seam that would be removed.
