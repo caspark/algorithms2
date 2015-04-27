@@ -30,40 +30,52 @@ impl Carver {
         assert!(width * height <= self.energy.len(), "carver must have been initialised with enough size for given pixels");
     }
 
-    pub fn calculate_energy(&mut self, width: usize, height: usize, pixels: &[RGB<u8>]) {
+    pub fn calculate_energy(&mut self, width: usize, height: usize, pixels: &[RGB<u8>], seam_hint: Option<Vec<usize>>) {
         let num_pixels = width * height;
         self.energy.truncate(num_pixels);
         self.assert_capacity_matches_image_dimensions(width, height);
         assert!(num_pixels <= pixels.len(), "width * height must be <= given pixel slice");
 
-
-        for i in 0..num_pixels {
-            let energy = if i < width { // first row
+        fn energy_of(width: usize, height: usize, pixels: &[RGB<u8>], pixel: usize) -> i32 {
+            if pixel < width { // first row
                 MAX_PIXEL_ENERGY
-            } else if i > width * (height - 1) { // last row
+            } else if pixel > width * (height - 1) { // last row
                 MAX_PIXEL_ENERGY
-            } else if i % width == 0 { // first column
+            } else if pixel % width == 0 { // first column
                 MAX_PIXEL_ENERGY
-            } else if (i + 1) % width == 0 { // last column
+            } else if (pixel + 1) % width == 0 { // last column
                 MAX_PIXEL_ENERGY
             } else {
                 let energy_x = {
-                    let x1 = pixels[i - 1];
-                    let x2 = pixels[i + 1];
+                    let x1 = pixels[pixel - 1];
+                    let x2 = pixels[pixel + 1];
                     (x1.r as i32 - x2.r as i32).pow(2) + (x1.g as i32 - x2.g as i32).pow(2) + (x1.b as i32 - x2.b  as i32).pow(2)
                 };
 
                 let energy_y = {
-                    let y1 = pixels[i - width];
-                    let y2 = pixels[i + width];
+                    let y1 = pixels[pixel - width];
+                    let y2 = pixels[pixel + width];
                     (y1.r as i32 - y2.r as i32).pow(2) + (y1.g as i32 - y2.g as i32).pow(2) + (y1.b as i32 - y2.b as i32).pow(2)
                 };
 
-                (energy_x + energy_y)
-            };
-
-            self.energy[i] = energy;
+                energy_x + energy_y
+            }
         }
+
+        match seam_hint {
+            None => for i in 0..num_pixels {
+                self.energy[i] = energy_of(width, height, pixels, i);
+            },
+            Some(seam) => for (height, i) in seam.iter().enumerate() {
+                let pixel = i - height;
+                // println!("Recalc for seam pixel {}", pixel);
+                //TODO this isn't quite correct because it doesn't calculate above and below again
+                self.energy[pixel - 1] = energy_of(width, height, pixels, pixel - 1);
+                self.energy[pixel] = energy_of(width, height, pixels, pixel);
+            }
+        }
+
+
     }
 
     pub fn find_seam(&mut self, width: usize, height: usize) -> Vec<usize> {
@@ -141,7 +153,7 @@ mod tests {
             rgb(255, 153, 51), rgb(255, 153, 153), rgb(255, 153, 255),
             rgb(255, 203, 51), rgb(255, 204, 153), rgb(255, 205, 255),
             rgb(255, 255, 51), rgb(255, 255, 153), rgb(255, 255, 255),
-        )[..]);
+        )[..], None);
 
         assert_eq!(carver.energy, vec!(
             MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY, MAX_PIXEL_ENERGY,

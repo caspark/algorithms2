@@ -6,7 +6,6 @@ use getopts::Options;
 use std::env;
 use std::path::Path;
 use std::convert::AsMut;
-use std::convert::AsRef;
 use std::process;
 
 mod carving;
@@ -64,7 +63,7 @@ fn main() {
 
     if verbose_mode { println!("Calculating pixel energies..."); }
     let mut carver = Carver::new(bitmap.buffer.len());
-    carver.calculate_energy(bitmap.width, bitmap.height, bitmap.buffer.as_mut());
+    carver.calculate_energy(bitmap.width, bitmap.height, bitmap.buffer.as_mut(), None);
     let mut seam = carver.find_seam(bitmap.width, bitmap.height);
 
     print!("Reducing width of image by {} pixels", width_reduction);
@@ -81,7 +80,7 @@ fn main() {
 
         if verbose_mode { println!("Recalculating pixel energies..."); }
         carver.calculate_energy(bitmap.width, bitmap.height,
-            subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height));
+            subset_by_width_and_height(bitmap.buffer.as_mut(), bitmap.width, bitmap.height), Some(seam));
         if verbose_mode { println!("Finding next seam..."); }
         seam = carver.find_seam(bitmap.width, bitmap.height);
 
