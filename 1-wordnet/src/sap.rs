@@ -19,18 +19,15 @@ pub fn path_stats_between(g: &Digraph, vs: Vec<usize>, ws: Vec<usize>) -> Option
         let target_paths = (vs_result.dist_to(target), ws_result.dist_to(target));
         match target_paths {
             (Some(v_tp), Some(w_tp)) => {
-                //HACK this code is ugly as sin but I've yet to convince the borrow checker that
-                //     there exists a nicer yet still legal way to express the same thing.
-                if best_path.is_none() {
-                    best_path = Some(v_tp + w_tp);
-                } else {
-                    let best_path_len = best_path.expect("previously checked");
-                    if v_tp + w_tp < best_path_len {
-                        best_path = Some(v_tp + w_tp);
-                    } else {
-                        best_path = Some(best_path_len);
-                    }
-                }
+                best_path = Some(match best_path {
+                    None => v_tp + w_tp,
+                    Some(best_path_len) =>
+                        if v_tp + w_tp < best_path_len {
+                            v_tp + w_tp
+                        } else {
+                            best_path_len
+                        },
+                });
             },
             _ => (),
         }
