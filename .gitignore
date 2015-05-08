@@ -1,3 +1,4 @@
 target/
 /1-wordnet/wordnet-testing*
 /2-seam-carving/seamCarving-testing*
+/5-boggle/boggle-testing*
