@@ -11,26 +11,38 @@ fn main() {
     let program = &args[0];
 
     let print_usage = || {
-        println!("Usage: {} DICTIONARY-FILE BOARD-FILE", program);
+        println!("Usage: {} DICTIONARY-FILE BOARD-FILE [iterations]", program);
     };
 
-    if args.len() != 3 {
+    if args.len() != 3 && args.len() != 4 {
         print_usage();
         process::exit(1);
     }
 
     let dict = parse_dictionary(&args[1]).unwrap();
+    let board = parse_boggle_board(&args[2]).unwrap();
+    let num_iterations = args.get(3).and_then(|s| s.parse::<u32>().ok());
+
     let solver = BoggleSolver::new(dict);
 
-    let board = parse_boggle_board(&args[2]).unwrap();
-    let words = solver.find_valid_words(&board);
-
-    let mut score = 0;
-    for word in words {
-        println!("{}", word);
-        score += BoggleSolver::score_of_word(&word);
+    match num_iterations {
+        None => {
+            let words = solver.find_valid_words(&board);
+            let mut score = 0;
+            for word in words {
+                println!("{}", word);
+                score += BoggleSolver::score_of_word(&word);
+            }
+            println!("Score = {}", score);
+        },
+        Some(solve_attempts) => {
+            println!("Solving board {} times", solve_attempts);
+            for _ in 0 .. solve_attempts {
+                solver.find_valid_words(&board);
+            }
+            println!("Done!");
+        }
     }
-    println!("Score = {}", score);
 }
 
 fn parse_dictionary(dict_path: &String) -> io::Result<Vec<String>> {

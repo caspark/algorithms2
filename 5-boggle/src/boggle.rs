@@ -24,7 +24,6 @@ impl BoggleBoard {
         drop(letters);
 
         assert!(!adjusted_letters.iter().any(|l| *l >= LETTER_OFFSET), "board has letters outside expected range!");
-        println!("Board created with letters of {:?}", adjusted_letters);
         BoggleBoard {
             width: width,
             height: height,
