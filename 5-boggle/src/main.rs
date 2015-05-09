@@ -1,50 +1,10 @@
 use std::env;
 use std::process;
 use std::io;
+use boggle::{BoggleBoard, BoggleSolver};
 
-struct BoggleBoard {
-    width: usize,
-    height: usize,
-    letters: Vec<u8>, // no unicode support needed
-}
-
-impl BoggleBoard {
-    pub fn new(width: usize, height: usize, letters: Vec<u8>) -> BoggleBoard {
-        assert_eq!(width * height, letters.len());
-        BoggleBoard {
-            width: width,
-            height: height,
-            letters: letters,
-        }
-    }
-}
-
-struct BoggleSolver {
-    words: Vec<String>, //TODO need to store words more efficiently than this
-}
-
-impl BoggleSolver {
-    pub fn new(valid_words: &[String]) -> BoggleSolver {
-        BoggleSolver {
-            words: valid_words.iter().cloned().collect(),
-        }
-    }
-
-    pub fn find_valid_words(&self, board: &BoggleBoard) -> Vec<String> {
-        unimplemented!();
-    }
-
-    pub fn score_of_word(word: &String) -> i32 {
-        match word.len() {
-            0 | 1 | 2 => 0,
-            3 | 4 => 1,
-            5 => 2,
-            6 => 3,
-            7 => 5,
-            _ => 8,
-        }
-    }
-}
+mod boggle;
+mod trie;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -122,38 +82,7 @@ fn parse_boggle_board(board_path: &String) -> io::Result<BoggleBoard> {
     }
     println!("done!");
     Ok(BoggleBoard::new(width.expect("board width must be specified"),
-                        height.expect("board height must be specified"), letters))
+                        height.expect("board height must be specified"),
+                        letters))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::BoggleSolver;
-
-    #[test]
-    fn lazy_remove_indexes_of_works_correctly() {
-        let mut vec = (0..11).collect::<Vec<u32>>();
-        let to_remove = vec!(1, 3, 7);
-
-        lazy_remove_indexes_of(&mut vec[..], &to_remove);
-        let vec_len = vec.len();
-        vec.truncate(vec_len - to_remove.len()); // only the first 7 elements of vec are valid now
-
-        // 0 1 2 3 4 5 6 7 8 9 10 11 gets turned into
-        // 0   2   4 5 6   8 9 10 11
-        assert_eq!(vec, vec!(0, 2, 4, 5, 6, 8, 9, 10));
-    }
-
-    #[test]
-    fn lazy_remove_indexes_of_works_correctly_on_edges() {
-        let mut vec = (0..5).collect::<Vec<u32>>();
-        let to_remove = vec!(0, 5);
-
-        lazy_remove_indexes_of(&mut vec[..], &to_remove);
-        let vec_len = vec.len();
-        vec.truncate(vec_len - to_remove.len()); // only the first 3 elements of vec are valid now
-
-        // 0 1 2 3 4 gets turned into
-        //   1 2 3
-        assert_eq!(vec, vec!(1, 2, 3));
-    }
-}
