@@ -57,8 +57,7 @@ impl BoggleSolver {
 
             let word = to_word(&path_so_far[..]);
 
-            let continue_with_path = path_so_far.len() < max_word_len &&
-                match self.words.contains(&word[..]) {
+            let path_is_possible_word = match self.words.contains(&word[..]) {
                     Presence::Missing => false,
                     Presence::Prefix => true,
                     Presence::Present => {
@@ -67,16 +66,17 @@ impl BoggleSolver {
                     },
                 };
 
-            if continue_with_path {
-                let latest_pos: usize= path_so_far[path_so_far.len()];
+            if path_so_far.len() < max_word_len && path_is_possible_word {
+                let latest_pos: usize = path_so_far[path_so_far.len()];
 
                 let (on_left_edge, on_right_edge) = {
                     let mod_result = latest_pos % board.width;
                     (mod_result == 0, mod_result == board.width - 1)
                 };
-                let (on_top_edge, on_bottom_edge) = {
-                    (latest_pos - board.width < 0, latest_pos + board.width >= max_word_len)
-                };
+                let (on_top_edge, on_bottom_edge) = (
+                    latest_pos < board.width,
+                    latest_pos + board.width >= max_word_len
+                );
 
                 let mut consider_path = |path_so_far: &Vec<usize>, candidate_pos| {
                     if !path_so_far.contains(&candidate_pos) {
