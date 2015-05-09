@@ -20,7 +20,7 @@ fn main() {
     }
 
     let dict = parse_dictionary(&args[1]).unwrap();
-    let solver = BoggleSolver::new(&dict);
+    let solver = BoggleSolver::new(dict);
 
     let board = parse_boggle_board(&args[2]).unwrap();
     let words = solver.find_valid_words(&board);

@@ -4,6 +4,10 @@ use trie::{Presence, Trie};
 /// because our Trie only supports storing up to 26 characters, we need to make sure that letters are stored
 /// as values from 0 to 25
 const LETTER_OFFSET: u8 = 65;
+/// the letter Q after applying offset
+const OFFSET_Q: u8 = ('Q' as i64 - LETTER_OFFSET as i64) as u8;
+/// the letter U after applying offset
+const OFFSET_U: u8 = ('U' as i64 - LETTER_OFFSET as i64) as u8;
 
 #[derive(Debug)]
 pub struct BoggleBoard {
@@ -15,8 +19,10 @@ pub struct BoggleBoard {
 impl BoggleBoard {
     pub fn new(width: usize, height: usize, letters: Vec<u8>) -> BoggleBoard {
         assert_eq!(width * height, letters.len());
+
         let adjusted_letters = letters.iter().map(|l| (*l as i32 - LETTER_OFFSET as i32) as u8).collect::<Vec<_>>();
         drop(letters);
+
         assert!(!adjusted_letters.iter().any(|l| *l >= LETTER_OFFSET), "board has letters outside expected range!");
         println!("Board created with letters of {:?}", adjusted_letters);
         BoggleBoard {
@@ -33,7 +39,7 @@ pub struct BoggleSolver {
 }
 
 impl BoggleSolver {
-    pub fn new(valid_words: &[String]) -> BoggleSolver {
+    pub fn new(valid_words: Vec<String>) -> BoggleSolver {
         BoggleSolver {
             words: {
                 let mut trie = Trie::new();
@@ -41,6 +47,7 @@ impl BoggleSolver {
                     let letters = word.as_bytes().iter()
                         .map(|l| (*l as i32 - LETTER_OFFSET as i32) as u8)
                         .collect::<Vec<_>>();
+
                     trie.add(&letters[..]);
                 }
                 trie
@@ -48,20 +55,23 @@ impl BoggleSolver {
         }
     }
 
-    pub fn find_valid_words<'s>(&self, board: &BoggleBoard) -> Vec<String> {
+    pub fn find_valid_words<'s>(&self, board: &BoggleBoard) -> HashSet<String> {
         let max_word_len = board.width * board.height; // aka the final position in the board
 
         let to_word = |path_so_far: &[usize]| {
             let mut built_word = Vec::with_capacity(max_word_len);
             for i in path_so_far {
-                built_word.push(board.letters[*i])
+                let letter = board.letters[*i];
+                built_word.push(board.letters[*i]);
+                if letter == OFFSET_Q {
+                    built_word.push(OFFSET_U);
+                }
             }
             built_word
         };
 
         let mut search_stack = (0..max_word_len).map(|i| vec![i]).collect::<Vec<_>>();
-        let mut found_words = Vec::new();
-
+        let mut found_words = HashSet::new();
 
         while search_stack.len() > 0 {
             let path_so_far = search_stack.pop().expect("search stack known to be non-empty");
@@ -72,7 +82,7 @@ impl BoggleSolver {
                     Presence::Missing => false,
                     Presence::Prefix => true,
                     Presence::Present => {
-                        found_words.push(String::from_utf8(word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
+                        found_words.insert(String::from_utf8(word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
                         true
                     },
                 };
@@ -143,16 +153,33 @@ impl BoggleSolver {
 
 #[cfg(test)]
 mod tests {
-    use super::{BoggleBoard, BoggleSolver};
+    use super::{BoggleBoard, BoggleSolver, LETTER_OFFSET, OFFSET_Q, OFFSET_U};
+
+    #[test]
+    fn letter_offsets_are_correct() {
+        assert_eq!(LETTER_OFFSET as char, 'A');
+        assert_eq!(OFFSET_Q as i64 + LETTER_OFFSET as i64, 'Q' as i64);
+        assert_eq!(OFFSET_U as i64 + LETTER_OFFSET as i64, 'U' as i64);
+    }
 
     #[test]
     fn can_solve_simple_board() {
         let board = BoggleBoard::new(2, 2, vec!['B' as u8, 'A' as u8, 'C' as u8, 'G' as u8]);
-        let solver = BoggleSolver::new(&vec!["BAG", "CAB", "BOB", "GAG"].iter().map(|s| s.to_string()).collect::<Vec<_>>()[..]);
+        let solver = BoggleSolver::new(vec!["BAG", "CAB", "BOB", "GAG"].iter().map(|s| s.to_string()).collect::<Vec<_>>());
 
-        let mut words = solver.find_valid_words(&board);
+        let mut words = solver.find_valid_words(&board).iter().cloned().collect::<Vec<_>>();
         &words[..].sort();
         assert_eq!(words, vec!["BAG".to_string(), "CAB".to_string()])
     }
 
+    #[test]
+    fn handles_qu_correctly() {
+        let board = BoggleBoard::new(2, 2, vec!['Q' as u8, 'I' as u8, 'T' as u8, 'X' as u8]);
+        let solver = BoggleSolver::new(vec!["QUIT", "QX"].iter().map(|s| s.to_string()).collect::<Vec<_>>());
+
+        let words = solver.find_valid_words(&board).iter().cloned().collect::<Vec<_>>();
+
+        // Q on board should be equal to QU, and we shouldn't be able to use Q without U.
+        assert_eq!(words, vec!["QUIT".to_string()])
+    }
 }
