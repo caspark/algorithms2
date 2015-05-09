@@ -45,6 +45,7 @@ impl Trie {
     }
 
     pub fn add(&mut self, key: &[u8]) {
+        assert!(!key.iter().any(|l| *l as usize >= R), format!("attempted to add key '{:?}' with letters outside R!", key));
         let mut old_root = self.root.take();
         self.root = Some(Box::new(Trie::add_node(&mut old_root, key, 0)));
     }

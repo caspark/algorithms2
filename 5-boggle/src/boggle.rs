@@ -1,6 +1,10 @@
 use std::collections::HashSet;
 use trie::{Presence, Trie};
 
+/// because our Trie only supports storing up to 26 characters, we need to make sure that letters are stored
+/// as values from 0 to 25
+const LETTER_OFFSET: u8 = 65;
+
 #[derive(Debug)]
 pub struct BoggleBoard {
     width: usize,
@@ -11,10 +15,14 @@ pub struct BoggleBoard {
 impl BoggleBoard {
     pub fn new(width: usize, height: usize, letters: Vec<u8>) -> BoggleBoard {
         assert_eq!(width * height, letters.len());
+        let adjusted_letters = letters.iter().map(|l| (*l as i32 - LETTER_OFFSET as i32) as u8).collect::<Vec<_>>();
+        drop(letters);
+        assert!(!adjusted_letters.iter().any(|l| *l >= LETTER_OFFSET), "board has letters outside expected range!");
+        println!("Board created with letters of {:?}", adjusted_letters);
         BoggleBoard {
             width: width,
             height: height,
-            letters: letters,
+            letters: adjusted_letters,
         }
     }
 }
@@ -30,7 +38,10 @@ impl BoggleSolver {
             words: {
                 let mut trie = Trie::new();
                 for word in valid_words {
-                    trie.add(word.as_bytes());
+                    let letters = word.as_bytes().iter()
+                        .map(|l| (*l as i32 - LETTER_OFFSET as i32) as u8)
+                        .collect::<Vec<_>>();
+                    trie.add(&letters[..]);
                 }
                 trie
             }
@@ -61,13 +72,13 @@ impl BoggleSolver {
                     Presence::Missing => false,
                     Presence::Prefix => true,
                     Presence::Present => {
-                        found_words.push(String::from_utf8(word).unwrap());
+                        found_words.push(String::from_utf8(word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
                         true
                     },
                 };
 
             if path_so_far.len() < max_word_len && path_is_possible_word {
-                let latest_pos: usize = path_so_far[path_so_far.len()];
+                let latest_pos: usize = path_so_far[path_so_far.len() - 1];
 
                 let (on_left_edge, on_right_edge) = {
                     let mod_result = latest_pos % board.width;
@@ -139,7 +150,8 @@ mod tests {
         let board = BoggleBoard::new(2, 2, vec!['B' as u8, 'A' as u8, 'C' as u8, 'G' as u8]);
         let solver = BoggleSolver::new(&vec!["BAG", "CAB", "BOB", "GAG"].iter().map(|s| s.to_string()).collect::<Vec<_>>()[..]);
 
-        let words = solver.find_valid_words(&board);
+        let mut words = solver.find_valid_words(&board);
+        &words[..].sort();
         assert_eq!(words, vec!["BAG".to_string(), "CAB".to_string()])
     }
 
