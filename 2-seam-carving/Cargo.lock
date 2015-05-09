@@ -8,7 +8,7 @@ dependencies = [
 
 [[package]]
 name = "c_vec"
-version = "1.0.11"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -21,15 +21,15 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "lodepng"
 version = "0.4.1"
-source = "git+https://github.com/pornel/lodepng-rust.git#4515663a2feadda382f1a836b1a1d93a576b920d"
+source = "git+https://github.com/pornel/lodepng-rust.git#c34071dbe643fb1f08b492f61852e65ea62f9770"
 dependencies = [
- "c_vec 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "c_vec 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -37,6 +37,6 @@ name = "log"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libc 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

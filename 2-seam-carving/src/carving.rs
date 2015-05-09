@@ -38,13 +38,14 @@ impl Carver {
 
 
         for i in 0..num_pixels {
+            let curr_modulo_width = i % width;
             let energy = if i < width { // first row
                 MAX_PIXEL_ENERGY
             } else if i > width * (height - 1) { // last row
                 MAX_PIXEL_ENERGY
-            } else if i % width == 0 { // first column
+            } else if curr_modulo_width == 0 { // first column
                 MAX_PIXEL_ENERGY
-            } else if (i + 1) % width == 0 { // last column
+            } else if curr_modulo_width == width - 1 { // last column
                 MAX_PIXEL_ENERGY
             } else {
                 let energy_x = {
@@ -86,15 +87,21 @@ impl Carver {
 
         // each pixel in the image has an edge to the pixel below and the pixel to the left and right of that
         for pixel in 0..(num_pixels - width) {
-            let next_pixel_options = if pixel % width == 0 { // first column
-                vec![pixel + width, pixel + width + 1]
-            } else if (pixel + 1) % width == 0 { // last column
-                vec![pixel + width - 1, pixel + width]
+            let tmp_len_2;
+            let tmp_len_3;
+            let curr_modulo_width = pixel % width;
+            let next_pixel_options: &[usize] = if curr_modulo_width == 0 { // first column
+                tmp_len_2 = [pixel + width, pixel + width + 1];
+                &tmp_len_2
+            } else if curr_modulo_width == width - 1 { // last column
+                tmp_len_2 = [pixel + width - 1, pixel + width];
+                &tmp_len_2
             } else {
-                vec![pixel + width - 1, pixel + width, pixel + width + 1]
+                tmp_len_3 = [pixel + width - 1, pixel + width, pixel + width + 1];
+                &tmp_len_3
             };
 
-            for pixel_option in next_pixel_options {
+            for &pixel_option in next_pixel_options {
                 if self.dist_to[pixel_option] > self.dist_to[pixel] + self.energy[pixel_option] {
                     self.dist_to[pixel_option] = self.dist_to[pixel] + self.energy[pixel_option];
                     self.prev_vertex[pixel_option] = pixel;

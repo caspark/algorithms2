@@ -6,7 +6,6 @@ use getopts::Options;
 use std::env;
 use std::path::Path;
 use std::convert::AsMut;
-use std::convert::AsRef;
 use std::process;
 
 mod carving;
