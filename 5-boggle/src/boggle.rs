@@ -9,6 +9,7 @@ const OFFSET_Q: u8 = ('Q' as i64 - LETTER_OFFSET as i64) as u8;
 /// the letter U after applying offset
 const OFFSET_U: u8 = ('U' as i64 - LETTER_OFFSET as i64) as u8;
 
+
 #[derive(Debug)]
 pub struct BoggleBoard {
     width: usize,
@@ -56,82 +57,90 @@ impl BoggleSolver {
 
     pub fn find_valid_words<'s>(&self, board: &BoggleBoard) -> HashSet<String> {
         let max_word_len = board.width * board.height; // aka the final position in the board
-        let mut built_word = Vec::with_capacity(max_word_len);
 
-        let mut search_stack = (0..max_word_len).map(|i| vec![i]).collect::<Vec<_>>();
         let mut found_words = HashSet::new();
+        let mut built_word: Vec<u8> = Vec::with_capacity(max_word_len);
+        let mut path_so_far: Vec<usize> = Vec::with_capacity(max_word_len);
+        for next_pos in (0..max_word_len) {
+            self.find_valid_words_inner(board, max_word_len, &mut found_words, &mut built_word,
+                &mut path_so_far, next_pos);
+        }
+        found_words
+    }
 
-        while search_stack.len() > 0 {
-            let path_so_far = search_stack.pop().expect("search stack known to be non-empty");
+    //TODO it'd be nicer to write this in non-recursive fashion. next_pos is the only thing that
+    // changes in each recursive call.
+    fn find_valid_words_inner(&self, board: &BoggleBoard, max_word_len: usize,
+                              found_words: &mut HashSet<String>, built_word: &mut Vec<u8>,
+                              path_so_far: &mut Vec<usize>, next_pos: usize) {
+        path_so_far.push(next_pos);
+        let next_char = board.letters[next_pos];
+        built_word.push(next_char);
+        if next_char == OFFSET_Q {
+            built_word.push(OFFSET_U);
+        }
 
-            built_word.truncate(0);
-            for i in path_so_far.iter() {
-                let letter = board.letters[*i];
-                built_word.push(letter);
-                if letter == OFFSET_Q {
-                    built_word.push(OFFSET_U);
+        //TODO there's a straightforward optimization possible here: track the current position in
+        // the self.words trie and keep it in step with built_word.
+        let path_is_possible_word = match self.words.contains(&built_word[..]) {
+            Presence::Missing => false,
+            Presence::Prefix => true,
+            Presence::Present => {
+                found_words.insert(String::from_utf8(built_word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
+                true
+            },
+        };
+
+        if path_so_far.len() < max_word_len && path_is_possible_word {
+            let (on_left_edge, on_right_edge) = {
+                let mod_result = next_pos % board.width;
+                (mod_result == 0, mod_result == board.width - 1)
+            };
+            let (on_top_edge, on_bottom_edge) = (
+                next_pos < board.width,
+                next_pos + board.width >= max_word_len
+            );
+
+            let mut try_including = |candidate_pos: usize| {
+                if !path_so_far.contains(&candidate_pos) {
+                    self.find_valid_words_inner(board, max_word_len, found_words, built_word, path_so_far, candidate_pos);
+                }
+            };
+
+            // consider up to 8 surrounding positions
+            if !on_top_edge {
+                if !on_left_edge {
+                    try_including(next_pos - board.width - 1);
+                }
+                try_including(next_pos - board.width);
+                if !on_right_edge {
+                    try_including(next_pos - board.width + 1);
                 }
             }
-
-            let path_is_possible_word = match self.words.contains(&built_word[..]) {
-                    Presence::Missing => false,
-                    Presence::Prefix => true,
-                    Presence::Present => {
-                        found_words.insert(String::from_utf8(built_word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
-                        true
-                    },
-                };
-
-            if path_so_far.len() < max_word_len && path_is_possible_word {
-                let latest_pos: usize = path_so_far[path_so_far.len() - 1];
-
-                let (on_left_edge, on_right_edge) = {
-                    let mod_result = latest_pos % board.width;
-                    (mod_result == 0, mod_result == board.width - 1)
-                };
-                let (on_top_edge, on_bottom_edge) = (
-                    latest_pos < board.width,
-                    latest_pos + board.width >= max_word_len
-                );
-
-                let mut consider_path = |path_so_far: &Vec<usize>, candidate_pos| {
-                    if !path_so_far.contains(&candidate_pos) {
-                        let mut path_to_consider = path_so_far.clone();
-                        path_to_consider.push(candidate_pos);
-                        search_stack.push(path_to_consider);
-                    }
-                };
-
-                // consider up to 8 surrounding positions
-                if !on_top_edge {
-                    if !on_left_edge {
-                        consider_path(&path_so_far, latest_pos - board.width - 1);
-                    }
-                    consider_path(&path_so_far, latest_pos - board.width);
-                    if !on_right_edge {
-                        consider_path(&path_so_far, latest_pos - board.width + 1);
-                    }
-                }
+            if !on_left_edge {
+                try_including(next_pos - 1);
+            }
+            // (don't consider the 'middle' position, because we already include it)
+            if !on_right_edge {
+                try_including(next_pos + 1);
+            }
+            if !on_bottom_edge {
                 if !on_left_edge {
-                    consider_path(&path_so_far, latest_pos - 1);
+                    try_including(next_pos + board.width - 1);
                 }
-                // (don't consider the 'middle' position, because we already include it)
+                try_including(next_pos + board.width);
                 if !on_right_edge {
-                    consider_path(&path_so_far, latest_pos + 1);
-                }
-                if !on_bottom_edge {
-                    if !on_left_edge {
-                        consider_path(&path_so_far, latest_pos + board.width - 1);
-                    }
-                    consider_path(&path_so_far, latest_pos + board.width);
-                    if !on_right_edge {
-                        consider_path(&path_so_far, latest_pos + board.width + 1);
-                    }
+                    try_including(next_pos + board.width + 1);
                 }
             }
         }
 
-        found_words
+        path_so_far.pop();
+        let removed_char = built_word.pop().expect("built_word should not be empty");
+        if removed_char == OFFSET_U && built_word.last() == Some(&OFFSET_Q) {
+            // the U we removed was there because of a Q; so remove the Q too.
+            built_word.pop();
+        }
     }
 
     pub fn score_of_word(word: &String) -> i32 {
