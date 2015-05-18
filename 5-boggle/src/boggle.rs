@@ -102,7 +102,7 @@ impl BoggleSolver {
                     }
                 };
 
-                // consider up to 8 surrounding position
+                // consider up to 8 surrounding positions
                 if !on_top_edge {
                     if !on_left_edge {
                         consider_path(&path_so_far, latest_pos - board.width - 1);
