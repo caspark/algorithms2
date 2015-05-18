@@ -56,18 +56,7 @@ impl BoggleSolver {
 
     pub fn find_valid_words<'s>(&self, board: &BoggleBoard) -> HashSet<String> {
         let max_word_len = board.width * board.height; // aka the final position in the board
-
-        let to_word = |path_so_far: &[usize]| {
-            let mut built_word = Vec::with_capacity(max_word_len);
-            for i in path_so_far {
-                let letter = board.letters[*i];
-                built_word.push(board.letters[*i]);
-                if letter == OFFSET_Q {
-                    built_word.push(OFFSET_U);
-                }
-            }
-            built_word
-        };
+        let mut built_word = Vec::with_capacity(max_word_len);
 
         let mut search_stack = (0..max_word_len).map(|i| vec![i]).collect::<Vec<_>>();
         let mut found_words = HashSet::new();
@@ -75,13 +64,20 @@ impl BoggleSolver {
         while search_stack.len() > 0 {
             let path_so_far = search_stack.pop().expect("search stack known to be non-empty");
 
-            let word = to_word(&path_so_far[..]);
+            built_word.truncate(0);
+            for i in path_so_far.iter() {
+                let letter = board.letters[*i];
+                built_word.push(letter);
+                if letter == OFFSET_Q {
+                    built_word.push(OFFSET_U);
+                }
+            }
 
-            let path_is_possible_word = match self.words.contains(&word[..]) {
+            let path_is_possible_word = match self.words.contains(&built_word[..]) {
                     Presence::Missing => false,
                     Presence::Prefix => true,
                     Presence::Present => {
-                        found_words.insert(String::from_utf8(word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
+                        found_words.insert(String::from_utf8(built_word.iter().map(|l| l + LETTER_OFFSET).collect()).unwrap());
                         true
                     },
                 };
