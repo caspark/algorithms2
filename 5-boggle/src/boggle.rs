@@ -129,7 +129,7 @@ impl BoggleSolver {
                     }
                 }
             }
-       }
+        }
 
         found_words
     }
