@@ -1,4 +1,10 @@
 [package]
-name = "4-bogle"
+name = "5-bogle"
 version = "0.1.0"
 authors = ["Caspar Krieger <caspar@asparck.com>"]
+
+[dependencies]
+time = "*"
+
+[profile.release]
+debug = true

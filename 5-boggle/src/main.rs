@@ -1,3 +1,5 @@
+extern crate time;
+
 use std::env;
 use std::process;
 use std::io;
@@ -37,10 +39,12 @@ fn main() {
         },
         Some(solve_attempts) => {
             println!("Solving board {} times", solve_attempts);
+            let start_time = time::precise_time_ns();
             for _ in 0 .. solve_attempts {
                 solver.find_valid_words(&board);
             }
-            println!("Done!");
+            let finish_time = time::precise_time_ns();
+            println!("Done in {} ms", (finish_time / 1000000) as i64 - (start_time / 1000000) as i64);
         }
     }
 }
@@ -97,4 +101,3 @@ fn parse_boggle_board(board_path: &String) -> io::Result<BoggleBoard> {
                         height.expect("board height must be specified"),
                         letters))
 }
-
