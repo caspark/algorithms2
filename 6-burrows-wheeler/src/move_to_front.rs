@@ -1,0 +1,7 @@
+fn encode() {
+
+}
+
+fn decode() {
+
+}
