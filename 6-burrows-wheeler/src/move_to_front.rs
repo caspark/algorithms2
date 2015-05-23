@@ -37,7 +37,9 @@ fn move_byte_to_front(slice: &mut [u8], pos: usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::move_byte_to_front;
+    use super::{encode, decode, move_byte_to_front};
+    use std::io::prelude::*;
+    use std::io::Cursor;
 
     #[test]
     fn alphabet_is_updated_properly() {
@@ -45,5 +47,19 @@ mod tests {
         let mut vec = vec![0, 1, 2, 3, 4, 5];
         move_byte_to_front(vec.as_mut(), 3);
         assert_eq!(vec, vec![3, 0, 1, 2, 4, 5]);
+    }
+
+    #[test]
+    fn can_encode_and_decode_a_string_with_no_repeating_chars() {
+        let original = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let copy = Cursor::new(original.clone());
+        let mut encoded = Cursor::new(Vec::with_capacity(original.len()));
+        let mut decoded = Cursor::new(Vec::with_capacity(original.len()));
+
+        encode(copy, &mut encoded);
+        decode(encoded, &mut decoded);
+
+        //TODO this assertion fails even though I think the logic is correct
+        assert_eq!(decoded.get_ref().clone(), original);
     }
 }
