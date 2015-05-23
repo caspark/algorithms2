@@ -2,3 +2,6 @@
 name = "6-burrows-wheeler"
 version = "0.1.0"
 authors = ["Caspar Krieger <caspar@asparck.com>"]
+
+[dependencies]
+itertools = "*"
