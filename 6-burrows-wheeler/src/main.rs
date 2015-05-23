@@ -1,6 +1,7 @@
 extern crate itertools;
 
 use std::env;
+use std::io;
 
 mod move_to_front;
 
@@ -26,9 +27,14 @@ fn main() {
         println!("Error: unexpected number of arguments!");
         print_usage();
     } else {
+        let stdin = io::stdin();
+        let stdin_lock = stdin.lock();
+        let stdout = io::stdout();
+        let stdout_lock = &mut stdout.lock();
+
         match (args[1].as_ref(), args[2].as_ref()) {
-            ("move-to-front", "encode") => move_to_front::encode(),
-            ("move-to-front", "decode") => move_to_front::decode(),
+            ("move-to-front", "encode") => move_to_front::encode(stdin_lock, stdout_lock),
+            ("move-to-front", "decode") => move_to_front::decode(stdin_lock, stdout_lock),
             (operation, command) => {
                 println!("Error: unrecognised arguments: {} {}", operation, command);
                 print_usage();

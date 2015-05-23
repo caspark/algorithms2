@@ -1,47 +1,28 @@
 use itertools::*;
 use std::io::prelude::*;
-use std::io;
-
-macro_rules! printerrln(
-    ($($arg:tt)*) => (
-        match writeln!(&mut ::std::io::stderr(), $($arg)* ) {
-            Ok(_) => {},
-            Err(x) => panic!("Unable to write to stderr: {}", x),
-        }
-    )
-);
 
 /// Reads from stdin and performs move to front encoding, writing the result to stdout
-pub fn encode() {
-    let stdin = io::stdin();
-    let stdin_lock = stdin.lock();
-    let stdout = io::stdout();
-    let mut stdout_lock = stdout.lock();
+pub fn encode<R: Read, W: Write>(input: R, output: &mut W) {
 
     let mut alphabet = (0..u8::max_value()).collect::<Vec<_>>();
 
-    for in_byte in stdin_lock.bytes().map(|r| r.unwrap()) {
+    for in_byte in input.bytes().map(|r| r.unwrap()) {
         let byte_pos = alphabet.iter().find_position(|&&a| a == in_byte)
             .expect("alphabet covers all byte values")
             .0; // discard the found letter
         let out_byte = byte_pos as u8;
-        stdout_lock.write(&[out_byte]).unwrap();
+        output.write(&[out_byte]).unwrap();
         move_byte_to_front(alphabet.as_mut(), byte_pos);
     }
 }
 
-pub fn decode() {
-    let stdin = io::stdin();
-    let stdin_lock = stdin.lock();
-    let stdout = io::stdout();
-    let mut stdout_lock = stdout.lock();
-
+pub fn decode<R: Read, W: Write>(input: R, output: &mut W) {
     let mut alphabet = (0..u8::max_value()).collect::<Vec<_>>();
 
-    for in_byte in stdin_lock.bytes().map(|r| r.unwrap()) {
+    for in_byte in input.bytes().map(|r| r.unwrap()) {
         let byte_pos = in_byte as usize;
         let out_byte = alphabet[byte_pos];
-        stdout_lock.write(&[out_byte]).unwrap();
+        output.write(&[out_byte]).unwrap();
         move_byte_to_front(alphabet.as_mut(), byte_pos);
     }
 }
