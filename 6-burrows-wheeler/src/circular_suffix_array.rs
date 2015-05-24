@@ -2,7 +2,9 @@ pub struct CircularSuffixArray(Vec<usize>);
 
 pub fn create(input: &[u8]) -> CircularSuffixArray {
     let mut indexes = (0..input.len()).collect::<Vec<usize>>();
-    three_way_circular_suffix_qsort(input, indexes.as_mut(), 0, input.len() - 1, 0);
+    if input.len() > 0 {
+        three_way_circular_suffix_qsort(input, indexes.as_mut(), 0, input.len() - 1, 0);
+    }
     CircularSuffixArray(indexes)
 }
 
@@ -32,7 +34,9 @@ fn three_way_circular_suffix_qsort(input: &[u8], output_order: &mut [usize], lo:
             }
         }
         // sort less than group
-        three_way_circular_suffix_qsort(input, output_order, lo, eq_start_idx - 1, curr_char_idx);
+        if eq_start_idx != 0 { // necessary to avoid underflows
+            three_way_circular_suffix_qsort(input, output_order, lo, eq_start_idx - 1, curr_char_idx);
+        }
         // sort equal group (looking at 1 more character of each string)
         three_way_circular_suffix_qsort(input, output_order, eq_start_idx, eq_finsh_idx, curr_char_idx + 1);
         // sort greater than group
@@ -43,6 +47,7 @@ fn three_way_circular_suffix_qsort(input: &[u8], output_order: &mut [usize], lo:
 #[cfg(test)]
 mod tests {
     use super::{create, CircularSuffixArray};
+    use quickcheck::quickcheck;
 
     #[test]
     fn matches_behaviour_of_example_from_spec() {
@@ -53,5 +58,14 @@ mod tests {
         for (i, &expected_index) in expected_indexes.iter().enumerate() {
             assert!(result[i] == expected_index, format!("Expected CSA to say index({}) is {}", i, expected_index));
         }
+    }
+
+    #[test]
+    fn does_not_crash_for_random_inputs() {
+        fn create_circular_suffix_array(input: Vec<u8>) -> bool {
+            create(input.as_ref());
+            true
+        }
+        quickcheck(create_circular_suffix_array as fn(Vec<u8>) -> bool)
     }
 }
