@@ -34,7 +34,9 @@ pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) -> io::Result<()>
     let t_vec = input.bytes().map(|r| r.unwrap()).collect::<Vec<_>>();
     let first_col = {
         let mut tmp = t_vec.clone();
-        tmp.sort(); //FIXME this will run in ~ O(n log n), which is too slow
+        tmp.sort(); //FIXME this will run in ~ O(N log N), which is too slow
+                    // using key indexed counting should do the sort in O(N + R)
+                    // and should also solve the O(N*N) problem below
         tmp
     };
 
