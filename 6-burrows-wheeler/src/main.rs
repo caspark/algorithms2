@@ -1,4 +1,5 @@
 extern crate itertools;
+#[cfg(test)]
 extern crate quickcheck;
 
 use std::env;
