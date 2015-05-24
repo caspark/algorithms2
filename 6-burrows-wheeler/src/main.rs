@@ -5,6 +5,7 @@ use std::env;
 use std::io;
 
 mod move_to_front;
+mod circular_suffix_array;
 
 // Use for for debugging
 macro_rules! printerrln(
@@ -16,6 +17,7 @@ macro_rules! printerrln(
     )
 );
 
+#[cfg_attr(test, allow(dead_code))]
 fn main() {
     let args: Vec<_> = env::args().collect();
 
