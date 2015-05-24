@@ -18,8 +18,28 @@ pub fn encode<R: Read, W: Write>(mut input: R, output: &mut W) {
 }
 
 pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) {
-    let original_pos = read_usize(&mut input);
-    unimplemented!();
+    let first = read_usize(&mut input); // aka original_pos when we encoded it
+    let t_vec = input.bytes().map(|r| r.unwrap()).collect::<Vec<_>>();
+
+    //TODO use black magic to build next_vec (below is hardcoded for "ABRACADABRA!" from spec)
+    let next_vec = vec![3usize, 0, 6, 7, 8, 9, 10, 11, 5, 2, 1, 4];
+
+    let first_col = {
+        let mut tmp = t_vec.clone();
+        tmp.sort();
+        tmp
+    };
+    let mut curr = first;
+    loop {
+        let decoded_byte = first_col[curr];
+        println!("Decoded {}", decoded_byte as char);
+        assert_eq!(output.write(&[decoded_byte]).unwrap(), 1);
+        curr = next_vec[curr];
+
+        if curr == first {
+            break;
+        }
+    }
 }
 
 fn write_usize<W: Write>(n: usize, output: &mut W) {
