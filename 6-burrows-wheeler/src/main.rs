@@ -3,6 +3,7 @@ extern crate itertools;
 extern crate quickcheck;
 
 use std::env;
+use std::error::Error;
 use std::io;
 
 mod burrows_wheeler_transform;
@@ -37,15 +38,18 @@ fn main() {
         let stdout = io::stdout();
         let stdout_lock = &mut stdout.lock();
 
-        match (args[1].as_ref(), args[2].as_ref()) {
+        let result = match (args[1].as_ref(), args[2].as_ref()) {
             ("move-to-front", "encode") => move_to_front::encode(stdin_lock, stdout_lock),
             ("move-to-front", "decode") => move_to_front::decode(stdin_lock, stdout_lock),
-            ("burrows-wheeler", "encode") => burrows_wheeler_transform::decode(stdin_lock, stdout_lock),
+            ("burrows-wheeler", "encode") => burrows_wheeler_transform::encode(stdin_lock, stdout_lock),
             ("burrows-wheeler", "decode") => burrows_wheeler_transform::decode(stdin_lock, stdout_lock),
             (operation, command) => {
-                println!("Error: unrecognised arguments: {} {}", operation, command);
-                print_usage();
+                let msg = format!("unrecognised arguments: {} {}\nRun with no arguments to see available arguments.", operation, command);
+                Err(io::Error::new(io::ErrorKind::InvalidInput, msg))
             },
         };
+        if let Err(error) = result {
+            println!("Error encountered: {}", error.description());
+        }
     }
 }

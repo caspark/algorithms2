@@ -1,66 +1,112 @@
 use circular_suffix_array::{self, CircularSuffixArray};
+use std::io;
 use std::io::prelude::*;
 use std::mem;
 use itertools::Itertools;
 
-pub fn encode<R: Read, W: Write>(mut input: R, output: &mut W) {
+pub fn encode<R: Read, W: Write>(mut input: R, output: &mut W) -> io::Result<()> {
     let mut input_vec = Vec::new();
-    input.read_to_end(&mut input_vec).unwrap();
+    try!(input.read_to_end(&mut input_vec));
     drop(input);
+    if input_vec.len() == 0 {
+        return Ok(());
+    }
     let CircularSuffixArray(csa_vec) = circular_suffix_array::create(input_vec.as_ref());
     let original_pos = csa_vec.iter().find_position(|&&x| x == 0).unwrap().0;
-    write_usize(original_pos, output);
+    try!(write_usize(original_pos, output));
     for x in csa_vec {
         let pos = if x == 0 { input_vec.len() - 1 } else { x - 1 };
         let to_write = input_vec[pos];
         assert_eq!(output.write(&[to_write]).unwrap(), 1);
     }
+    Ok(())
 }
 
-pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) {
-    let first = read_usize(&mut input); // aka original_pos when we encoded it
+pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) -> io::Result<()> {
+    let first = match read_usize(&mut input) { // aka original_pos when we encoded it
+        Ok(f) => f,
+        Err(err) => if err.kind() == io::ErrorKind::NotFound {
+            return Ok(()); // seems like there's no data coming down the pipe
+        } else {
+            return Err(err)
+        }
+    };
     let t_vec = input.bytes().map(|r| r.unwrap()).collect::<Vec<_>>();
-
-    //TODO use black magic to build next_vec (below is hardcoded for "ABRACADABRA!" from spec)
-    let next_vec = vec![3usize, 0, 6, 7, 8, 9, 10, 11, 5, 2, 1, 4];
-
     let first_col = {
         let mut tmp = t_vec.clone();
-        tmp.sort();
+        tmp.sort(); //FIXME this will run in ~ O(n log n), which is too slow
         tmp
     };
+
+    let next_vec = {
+        let mut v = Vec::with_capacity(t_vec.len());
+        let mut last_byte_and_pos = None;
+        for &first_col_byte in first_col.iter() {
+            let start_pos = match last_byte_and_pos {//TODO not using pattern matching is probably nicer
+                None => {
+                    0
+                },
+                Some((last_byte, last_pos)) => if last_byte == first_col_byte {
+                    (last_pos + 1) % t_vec.len()
+                } else {
+                    0
+                }
+            };
+            //FIXME this will run in O(N*N), which is too slow
+            for t_col_idx in start_pos..t_vec.len() {
+                let t_col_byte = t_vec[t_col_idx];
+                if first_col_byte == t_col_byte {
+                    last_byte_and_pos = Some((t_col_byte, t_col_idx));
+                    v.push(t_col_idx);
+                    break;
+                }
+            }
+        }
+        v
+    };
+
     let mut curr = first;
     loop {
         let decoded_byte = first_col[curr];
-        println!("Decoded {}", decoded_byte as char);
-        assert_eq!(output.write(&[decoded_byte]).unwrap(), 1);
+        assert_eq!(try!(output.write(&[decoded_byte])), 1);
         curr = next_vec[curr];
 
         if curr == first {
             break;
         }
     }
+    Ok(())
 }
 
-fn write_usize<W: Write>(n: usize, output: &mut W) {
+fn write_usize<W: Write>(n: usize, output: &mut W) -> io::Result<()> {
     let usize_size_in_bytes: usize = mem::size_of::<usize>();
     for byte in 0..usize_size_in_bytes {
         let to_write = (n >> (byte * 8)) & 255;
-        let num_bytes_written = output.write(&[to_write as u8]).unwrap();
-        assert!(num_bytes_written == 1, "Unable to write expected number of bytes");
+        let num_bytes_written = try!(output.write(&[to_write as u8]));
+        if num_bytes_written != 1 {
+            return Err(io::Error::new(io::ErrorKind::Other, "Unable to write expected number of bytes to encode a usize"));
+        }
     }
+    Ok(())
 }
 
-fn read_usize<R: Read>(input: &mut R) -> usize {
+fn read_usize<R: Read>(input: &mut R) -> io::Result<usize> {
     let mut result = 0usize;
     let usize_size_in_bytes: usize = mem::size_of::<usize>();
     for byte in 0..usize_size_in_bytes {
         let mut buf = [0u8];
-        let num_bytes_read = input.read(&mut buf).unwrap();
+        let num_bytes_read = try!(input.read(&mut buf));
+        if num_bytes_read != 1 {
+            if byte == 0 {
+                return Err(io::Error::new(io::ErrorKind::NotFound, "Cannot decode a usize; Read appears to be empty"));
+            } else {
+                return Err(io::Error::new(io::ErrorKind::Other, "Unable to read expected number of bytes to decode a usize"));
+            }
+        }
         assert!(num_bytes_read == 1, "Unable to read expected number of bytes");
         result += (buf[0] as usize) << (byte * 8);
     }
-    result
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -72,9 +118,9 @@ mod tests {
     fn try_encode_and_decode_usize(input: usize) -> bool {
         let mut encoded = Cursor::new(Vec::new());
 
-        write_usize(input, &mut encoded);
+        write_usize(input, &mut encoded).unwrap();
         encoded.set_position(0); // seek to the start of the vec
-        let result = read_usize(&mut encoded);
+        let result = read_usize(&mut encoded).unwrap();
 
         result == input
     }
@@ -94,9 +140,9 @@ mod tests {
         let mut encoded = Cursor::new(Vec::with_capacity(input.len()));
         let mut decoded = Cursor::new(Vec::with_capacity(input.len()));
 
-        encode(copy, &mut encoded);
+        encode(copy, &mut encoded).unwrap();
         encoded.set_position(0); // seek to the start of the vec
-        decode(encoded, &mut decoded);
+        decode(encoded, &mut decoded).unwrap();
 
         decoded.get_ref() == &input
     }

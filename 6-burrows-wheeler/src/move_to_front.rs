@@ -1,8 +1,9 @@
 use itertools::*;
+use std::io;
 use std::io::prelude::*;
 
 /// Reads from stdin and performs move to front encoding, writing the result to stdout
-pub fn encode<R: Read, W: Write>(input: R, output: &mut W) {
+pub fn encode<R: Read, W: Write>(input: R, output: &mut W) -> io::Result<()> {
 
     let mut alphabet = (0..u8::max_value()).collect::<Vec<_>>();
 
@@ -14,9 +15,10 @@ pub fn encode<R: Read, W: Write>(input: R, output: &mut W) {
         output.write(&[out_byte]).unwrap();
         move_byte_to_front(alphabet.as_mut(), byte_pos);
     }
+    Ok(())
 }
 
-pub fn decode<R: Read, W: Write>(input: R, output: &mut W) {
+pub fn decode<R: Read, W: Write>(input: R, output: &mut W) -> io::Result<()> {
     let mut alphabet = (0..u8::max_value()).collect::<Vec<_>>();
 
     for in_byte in input.bytes().map(|r| r.unwrap()) {
@@ -25,6 +27,7 @@ pub fn decode<R: Read, W: Write>(input: R, output: &mut W) {
         output.write(&[out_byte]).unwrap();
         move_byte_to_front(alphabet.as_mut(), byte_pos);
     }
+    Ok(())
 }
 
 fn move_byte_to_front(slice: &mut [u8], pos: usize) {
@@ -54,9 +57,9 @@ mod tests {
         let mut encoded = Cursor::new(Vec::with_capacity(input.len()));
         let mut decoded = Cursor::new(Vec::with_capacity(input.len()));
 
-        encode(copy, &mut encoded);
+        encode(copy, &mut encoded).unwrap();
         encoded.set_position(0); // seek to the start of the vec
-        decode(encoded, &mut decoded);
+        decode(encoded, &mut decoded).unwrap();
 
         decoded.get_ref() == &input
     }
@@ -70,5 +73,4 @@ mod tests {
     fn can_encode_and_decode_arbitrary_inputs() {
         quickcheck(try_encode_and_decode_input as fn(Vec<u8>) -> bool);
     }
-
 }
