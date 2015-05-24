@@ -1,4 +1,4 @@
-pub struct CircularSuffixArray(Vec<usize>);
+pub struct CircularSuffixArray(pub Vec<usize>);
 
 pub fn create(input: &[u8]) -> CircularSuffixArray {
     let mut indexes = (0..input.len()).collect::<Vec<usize>>();
