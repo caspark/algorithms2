@@ -3,15 +3,18 @@ use std::io::prelude::*;
 use std::mem;
 use itertools::Itertools;
 
-
 pub fn encode<R: Read, W: Write>(mut input: R, output: &mut W) {
     let mut input_vec = Vec::new();
     input.read_to_end(&mut input_vec).unwrap();
+    drop(input);
     let CircularSuffixArray(csa_vec) = circular_suffix_array::create(input_vec.as_ref());
     let original_pos = csa_vec.iter().find_position(|&&x| x == 0).unwrap().0;
     write_usize(original_pos, output);
-
-    unimplemented!();
+    for x in csa_vec {
+        let pos = if x == 0 { input_vec.len() - 1 } else { x - 1 };
+        let to_write = input_vec[pos];
+        assert_eq!(output.write(&[to_write]).unwrap(), 1);
+    }
 }
 
 pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) {
@@ -76,6 +79,11 @@ mod tests {
         decode(encoded, &mut decoded);
 
         decoded.get_ref() == &input
+    }
+
+    #[test]
+    fn can_encode_and_decode_sample_input() {
+        assert!(try_encode_and_decode_input("ABRACADABRA!".bytes().collect()));
     }
 
     #[test]
