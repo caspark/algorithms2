@@ -38,8 +38,8 @@ fn move_byte_to_front(slice: &mut [u8], pos: usize) {
 #[cfg(test)]
 mod tests {
     use super::{encode, decode, move_byte_to_front};
-    use std::io::prelude::*;
     use std::io::Cursor;
+    use quickcheck::quickcheck;
 
     #[test]
     fn alphabet_is_updated_properly() {
@@ -49,17 +49,26 @@ mod tests {
         assert_eq!(vec, vec![3, 0, 1, 2, 4, 5]);
     }
 
-    #[test]
-    fn can_encode_and_decode_a_string_with_no_repeating_chars() {
-        let original = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        let copy = Cursor::new(original.clone());
-        let mut encoded = Cursor::new(Vec::with_capacity(original.len()));
-        let mut decoded = Cursor::new(Vec::with_capacity(original.len()));
+    fn try_encode_and_decode_input(input: Vec<u8>) -> bool {
+        let copy = Cursor::new(input.clone());
+        let mut encoded = Cursor::new(Vec::with_capacity(input.len()));
+        let mut decoded = Cursor::new(Vec::with_capacity(input.len()));
 
         encode(copy, &mut encoded);
+        encoded.set_position(0); // seek to the start of the vec
         decode(encoded, &mut decoded);
 
-        //TODO this assertion fails even though I think the logic is correct
-        assert_eq!(decoded.get_ref().clone(), original);
+        decoded.get_ref() == &input
     }
+
+    #[test]
+    fn can_encode_and_decode_a_string_with_no_repeating_chars() {
+        assert!(try_encode_and_decode_input((0..10).collect()));
+    }
+
+    #[test]
+    fn can_encode_and_decode_arbitrary_inputs() {
+        quickcheck(try_encode_and_decode_input as fn(Vec<u8>) -> bool);
+    }
+
 }

@@ -1,4 +1,5 @@
 extern crate itertools;
+extern crate quickcheck;
 
 use std::env;
 use std::io;

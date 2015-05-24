@@ -5,3 +5,6 @@ authors = ["Caspar Krieger <caspar@asparck.com>"]
 
 [dependencies]
 itertools = "*"
+
+[dev-dependencies]
+quickcheck = "*"
