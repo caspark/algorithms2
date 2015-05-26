@@ -1,0 +1,4 @@
+[package]
+name = "3-baseball"
+version = "0.1.0"
+authors = ["Caspar Krieger <caspar@asparck.com>"]

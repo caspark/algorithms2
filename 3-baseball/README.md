@@ -7,4 +7,4 @@ This is a particularly uninteresting problem around finding out which baseball t
 * FAQ: http://coursera.cs.princeton.edu/algs4/checklists/baseball.html
 * Sample inputs: http://coursera.cs.princeton.edu/algs4/testing/baseball-testing.zip
 
-Skipped for now - might come back to it later.
+*Currently imcomplete*
