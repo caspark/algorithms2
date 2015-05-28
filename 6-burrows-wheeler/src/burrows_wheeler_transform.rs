@@ -32,13 +32,7 @@ pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) -> io::Result<()>
         }
     };
     let t_vec = input.bytes().map(|r| r.unwrap()).collect::<Vec<_>>();
-    let first_col = {
-        let mut tmp = t_vec.clone();
-        tmp.sort(); //FIXME this will run in ~ O(N log N), which is too slow
-                    // using key indexed counting should do the sort in O(N + R)
-                    // and should also solve the O(N*N) problem below
-        tmp
-    };
+    let first_col = key_indexed_sort(&t_vec);
 
     let next_vec = {
         let mut v = Vec::with_capacity(t_vec.len());
@@ -111,11 +105,46 @@ fn read_usize<R: Read>(input: &mut R) -> io::Result<usize> {
     Ok(result)
 }
 
+fn key_indexed_sort(input: &Vec<u8>) -> Vec<u8> {
+    const R: usize = 256; // size of the alphabet (aka u8::max_value() + 1)
+    let mut aux = input.clone();
+    let mut count = [0usize; R + 1];
+    for i in 0..input.len() {
+        count[input[i] as usize + 1] += 1;
+    }
+    for r in 0..R {
+        count[r + 1] += count[r];
+    }
+    for i in 0..input.len() {
+        aux[count[input[i] as usize]] = input[i];
+        count[input[i] as usize] += 1;
+    }
+    aux
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{decode, encode, read_usize, write_usize};
+    use super::{decode, encode, key_indexed_sort, read_usize, write_usize};
     use quickcheck::quickcheck;
     use std::io::Cursor;
+
+    fn try_sort(mut input: Vec<u8>) -> bool {
+        let result = key_indexed_sort(&input);
+
+        input.sort();
+
+        input == result // because result is now sorted
+    }
+
+    #[test]
+    fn can_sort_sample_input() {
+        assert!(try_sort("ABRACADABRA!".bytes().collect()));
+    }
+
+    #[test]
+    fn can_sort_arbitrary_inputs() {
+        quickcheck(try_sort as fn(Vec<u8>) -> bool);
+    }
 
     fn try_encode_and_decode_usize(input: usize) -> bool {
         let mut encoded = Cursor::new(Vec::new());
