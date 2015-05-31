@@ -29,7 +29,7 @@ fn main() {
                     for ce in certificates_of_elimination {
                         print!("{} ", ce);
                     }
-                    print!("}}");
+                    println!("}}");
                 },
             }
         }

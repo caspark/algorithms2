@@ -44,7 +44,7 @@ impl<'graph> FordFulkersonResult<'graph> {
 }
 
 /// Use the Ford-Fulkerson algorithm to find the min-cut/max-flow, updating flow in the graph as we go.
-pub fn calculate(g: &mut FlowNetwork, s: usize, t: usize) -> FordFulkersonResult {
+pub fn calculate(g: &FlowNetwork, s: usize, t: usize) -> FordFulkersonResult {
     assert!(s <= g.num_vertices(), "source vertex {} is not in flow network of size {}", s, g.num_vertices());
     assert!(t <= g.num_vertices(), "sink vertex {} is not in flow network of size {}", t, g.num_vertices());
     assert!(s != t, "source and target vertexes are the same! ({})", s);
