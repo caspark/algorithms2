@@ -12,8 +12,6 @@ impl fmt::Display for BaseballTeam {
     }
 }
 
-const N_A: i32 = 0; // used when the number of games remaining for team X is being recorded for team X
-
 #[derive(Debug, Clone)]
 pub struct BaseballDivision {
     teams: Vec<BaseballTeam>,
@@ -138,6 +136,8 @@ impl BaseballDivision {
 #[cfg(test)]
 mod tests {
     use super::{N_A, BaseballDivision, BaseballTeam, factorial};
+
+    const N_A: i32 = 0; // used when the number of games remaining for team X is being recorded for team X
 
     #[test]
     fn factorial_works() {
