@@ -1,10 +1,16 @@
 Baseball Team Elimination
 =========================
 
-This is a particularly uninteresting problem around finding out which baseball teams have been eliminated.
+Given an in-progress baseball league division, find out which baseball teams can no longer win (taking into account the amount of games that other teams must win before the season is over).
 
 * Spec: http://coursera.cs.princeton.edu/algs4/assignments/baseball.html
 * FAQ: http://coursera.cs.princeton.edu/algs4/checklists/baseball.html
 * Sample inputs: http://coursera.cs.princeton.edu/algs4/testing/baseball-testing.zip
 
-*Currently imcomplete*
+Complete and apparently working except for that the factorial implementation in use fails for the larger input files.
+
+Sample execution:
+
+```
+cargo run -- baseball-testing/teams5.txt
+```
