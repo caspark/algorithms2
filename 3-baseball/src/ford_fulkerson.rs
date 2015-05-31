@@ -1,7 +1,6 @@
 use flow_network::{FlowEdge, FlowNetwork};
 use std::collections::VecDeque;
 use std::f64;
-use std::cmp;
 
 const EPSILON: f64 = 1e-11;
 
@@ -37,9 +36,15 @@ impl<'graph> FordFulkersonResult<'graph> {
 
         self.marked[t]
     }
+
+    pub fn in_cut(&self, vertex: usize) -> bool {
+        debug_assert!(vertex < self.marked.len(), "Given vertex is outside the graph used to get this result");
+        self.marked[vertex]
+    }
 }
 
-pub fn calculate(g: &FlowNetwork, s: usize, t: usize) -> FordFulkersonResult {
+/// Use the Ford-Fulkerson algorithm to find the min-cut/max-flow, updating flow in the graph as we go.
+pub fn calculate(g: &mut FlowNetwork, s: usize, t: usize) -> FordFulkersonResult {
     assert!(s <= g.num_vertices(), "source vertex {} is not in flow network of size {}", s, g.num_vertices());
     assert!(t <= g.num_vertices(), "sink vertex {} is not in flow network of size {}", t, g.num_vertices());
     assert!(s != t, "source and target vertexes are the same! ({})", s);
