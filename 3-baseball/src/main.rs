@@ -4,6 +4,7 @@ use std::io;
 
 mod baseball;
 mod flow_network;
+mod ford_fulkerson;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
