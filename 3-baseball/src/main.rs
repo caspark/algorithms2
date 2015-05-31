@@ -63,8 +63,8 @@ fn parse_baseball_division(path: &String) -> io::Result<BaseballDivision> {
                     match i {
                         0 => teams.push(BaseballTeam(component.to_owned())),
                         1 => w.push(component.parse::<i32>().ok().expect("win count should be a number")),
-                        2 => r.push(component.parse::<i32>().ok().expect("loss count should be a number")),
-                        3 => l.push(component.parse::<i32>().ok().expect("remaining games count should be a number")),
+                        2 => l.push(component.parse::<i32>().ok().expect("loss count should be a number")),
+                        3 => r.push(component.parse::<i32>().ok().expect("remaining games count should be a number")),
                         _ => gi[i - 4] = component.parse::<i32>().ok()
                             .expect(format!("remaining games against team {} count should be a number", i - 3).as_ref()),
                     }
