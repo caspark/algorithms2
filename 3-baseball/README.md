@@ -7,7 +7,7 @@ Given an in-progress baseball league division, find out which baseball teams can
 * FAQ: http://coursera.cs.princeton.edu/algs4/checklists/baseball.html
 * Sample inputs: http://coursera.cs.princeton.edu/algs4/testing/baseball-testing.zip
 
-Complete and apparently working except for that the factorial implementation in use fails for the larger input files.
+Complete and seems like it works.
 
 Sample execution:
 

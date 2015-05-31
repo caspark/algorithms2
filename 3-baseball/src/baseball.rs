@@ -21,19 +21,6 @@ pub struct BaseballDivision {
     remaining_per_team: Vec<Vec<i32>>
 }
 
-fn factorial(mut n: usize) -> usize {
-    if n == 0 {
-        1
-    } else {
-        let mut result = 1usize;
-        while n > 0 {
-            result *= n;
-            n -= 1;
-        }
-        result
-    }
-}
-
 impl BaseballDivision {
     pub fn new(teams: Vec<BaseballTeam>, wins: Vec<i32>, losses: Vec<i32>, remaining: Vec<i32>,
                remaining_per_team: Vec<Vec<i32>>) -> BaseballDivision {
@@ -77,7 +64,7 @@ impl BaseballDivision {
         }
 
         // complex case
-        let num_game_vertices = factorial(team_count - 1 - 1); // exclude team_x and games between own teams
+        let num_game_vertices = team_count * team_count / 2 - team_count / 2 - team_count;
         let vertex_for_team = |i| num_game_vertices + i + 1;
         let source_vertex = vertex_for_team(team_count);
         let sink_vertex = source_vertex + 1;
@@ -90,12 +77,12 @@ impl BaseballDivision {
             }
             for j in i..team_count {
                 if i != j && j != team_x_num {
-                    /*println!("curr game vertex is {} / {}, team 0 is {}, team {} is {}, src is {}, sink is {}",
-                             curr_game_vertex, num_game_vertices,
-                             vertex_for_team(0),
-                             team_count - 1, vertex_for_team(team_count - 1),
-                             source_vertex, sink_vertex);
-                    */
+                    // Uncomment below to debug calculating number of needed game vertices
+                    // println!("curr game vertex is {} / {}, team 0 is {}, team {} is {}, src is {}, sink is {}",
+                    //          curr_game_vertex, num_game_vertices,
+                    //          vertex_for_team(0),
+                    //          team_count - 1, vertex_for_team(team_count - 1),
+                    //          source_vertex, sink_vertex);
                     assert!(curr_game_vertex <= num_game_vertices, "will use more vertices for games than expected!");
 
                     // edge from source to game vertex
@@ -135,18 +122,9 @@ impl BaseballDivision {
 
 #[cfg(test)]
 mod tests {
-    use super::{N_A, BaseballDivision, BaseballTeam, factorial};
+    use super::{BaseballDivision, BaseballTeam};
 
     const N_A: i32 = 0; // used when the number of games remaining for team X is being recorded for team X
-
-    #[test]
-    fn factorial_works() {
-        assert_eq!(factorial(0), 1);
-        assert_eq!(factorial(1), 1);
-        assert_eq!(factorial(2), 2);
-        assert_eq!(factorial(3), 6);
-        assert_eq!(factorial(4), 24);
-    }
 
     fn to_teams<S: Clone + Into<String>>(team_names: &[S]) -> Vec<BaseballTeam> {
         team_names.iter().cloned().map(|s| BaseballTeam(s.into())).collect()
