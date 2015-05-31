@@ -3,6 +3,7 @@ use std::env;
 use std::io;
 
 mod baseball;
+mod flow_network;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
