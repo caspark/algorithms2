@@ -20,14 +20,15 @@ fn main() {
         let div = parse_baseball_division(&args[1]).unwrap();
 
         for team in div.teams() {
-            if div.is_eliminated(team) {
-                print!("{} is eliminated by the subset R = {{ ", team);
-                for ce in div.certificate_of_elimination(team) {
-                    print!("{} ", ce);
-                }
-                print!("}}");
-            } else {
-                println!("{} is not eliminated", team);
+            match div.certificate_of_elimination(team) {
+                None => println!("{} is not eliminated", team),
+                Some(certificates_of_elimination) => {
+                    print!("{} is eliminated by the subset R = {{ ", team);
+                    for ce in certificates_of_elimination {
+                        print!("{} ", ce);
+                    }
+                    print!("}}");
+                },
             }
         }
     }

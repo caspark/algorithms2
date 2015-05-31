@@ -15,7 +15,7 @@ pub struct BaseballDivision {
     teams: Vec<BaseballTeam>,
     wins: Vec<i32>,
     losses: Vec<i32>,
-    remaining: Vec<i32>,
+    remaining: Vec<i32>, // "Note that a team's number of remaining games does not necessarily equal the sum of the remaining games against teams in its division because a team may play opponents outside its division."
     remaining_per_team: Vec<Vec<i32>>
 }
 
@@ -40,11 +40,7 @@ impl BaseballDivision {
         self.teams.iter()
     }
 
-    pub fn is_eliminated(&self, team: &BaseballTeam) -> bool {
-        unimplemented!();
-    }
-
-    pub fn certificate_of_elimination(&self, team: &BaseballTeam) -> Vec<String> {
+    pub fn certificate_of_elimination(&self, team: &BaseballTeam) -> Option<Vec<String>> {
         unimplemented!();
     }
 }
