@@ -54,6 +54,7 @@ fn parse_baseball_division(path: &String) -> io::Result<BaseballDivision> {
 
     for line_result in file_reader.lines() {
         let line = try!(line_result);
+        let line = line.trim(); // trimming is necessary to deal with CRLF in some input files :(
         match possible_team_count {
             None => possible_team_count = Some(line.parse::<usize>().unwrap()),
             Some(team_count) => {
