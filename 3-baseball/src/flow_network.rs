@@ -2,7 +2,6 @@ use std::cell::Cell;
 use std::fmt;
 use std::ops::Deref;
 use std::rc::Rc;
-use std::slice::Iter;
 
 // based on http://algs4.cs.princeton.edu/64maxflow/FlowEdge.java.html
 #[derive(Clone, PartialEq)]
@@ -17,7 +16,7 @@ impl FlowEdge {
     pub fn new(v: usize, w: usize, capacity: f64, flow: f64) -> FlowEdge {
         assert!(capacity >= 0.0, "edge capacity must be non-negative");
         assert!(flow <= capacity, "flow must not exceed capacity");
-        assert!(flow >= capacity, "flow must be non-negative");
+        assert!(flow >= 0.0, "flow must be non-negative");
         FlowEdge {
             v: v,
             w: w,
