@@ -107,7 +107,7 @@ fn read_usize<R: Read>(input: &mut R) -> io::Result<usize> {
 
 fn key_indexed_sort(input: &Vec<u8>) -> Vec<u8> {
     const R: usize = 256; // size of the alphabet (aka u8::max_value() + 1)
-    let mut aux = input.clone();
+    let mut aux = vec![0; input.len()];
     let mut count = [0usize; R + 1];
     for i in 0..input.len() {
         count[input[i] as usize + 1] += 1;
