@@ -32,45 +32,16 @@ pub fn decode<R: Read, W: Write>(mut input: R, output: &mut W) -> io::Result<()>
         }
     };
     let t_vec = input.bytes().map(|r| r.unwrap()).collect::<Vec<_>>();
-    let first_col = key_indexed_sort(&t_vec);
-
-    let next_vec = {
-        let mut v = Vec::with_capacity(t_vec.len());
-        let mut last_byte_and_pos = None;
-        for &first_col_byte in first_col.iter() {
-            let start_pos = match last_byte_and_pos {//TODO not using pattern matching is probably nicer
-                None => {
-                    0
-                },
-                Some((last_byte, last_pos)) => if last_byte == first_col_byte {
-                    (last_pos + 1) % t_vec.len()
-                } else {
-                    0
-                }
-            };
-            //FIXME this will run in O(N*N), which is too slow
-            for t_col_idx in start_pos..t_vec.len() {
-                let t_col_byte = t_vec[t_col_idx];
-                if first_col_byte == t_col_byte {
-                    last_byte_and_pos = Some((t_col_byte, t_col_idx));
-                    v.push(t_col_idx);
-                    break;
-                }
-            }
-        }
-        v
-    };
-
-    let mut curr = first;
-    loop {
-        let decoded_byte = first_col[curr];
-        assert_eq!(try!(output.write(&[decoded_byte])), 1);
-        curr = next_vec[curr];
-
-        if curr == first {
-            break;
+    let next_vec = key_indexed_count(&t_vec);
+    {
+        let mut curr = next_vec[first];
+        for _ in 0..t_vec.len() {
+            let decoded_byte = t_vec[curr as usize];
+            assert_eq!(try!(output.write(&[decoded_byte])), 1);
+            curr = next_vec[curr as usize];
         }
     }
+
     Ok(())
 }
 
@@ -105,7 +76,8 @@ fn read_usize<R: Read>(input: &mut R) -> io::Result<usize> {
     Ok(result)
 }
 
-fn key_indexed_sort(input: &Vec<u8>) -> Vec<u8> {
+// Similar to key indexed sorting.
+fn key_indexed_count(input: &Vec<u8>) -> Vec<usize> {
     const R: usize = 256; // size of the alphabet (aka u8::max_value() + 1)
     let mut aux = vec![0; input.len()];
     let mut count = [0usize; R + 1];
@@ -116,7 +88,7 @@ fn key_indexed_sort(input: &Vec<u8>) -> Vec<u8> {
         count[r + 1] += count[r];
     }
     for i in 0..input.len() {
-        aux[count[input[i] as usize]] = input[i];
+        aux[count[input[i] as usize]] = i;
         count[input[i] as usize] += 1;
     }
     aux
@@ -124,26 +96,15 @@ fn key_indexed_sort(input: &Vec<u8>) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{decode, encode, key_indexed_sort, read_usize, write_usize};
+    use super::{decode, encode, key_indexed_count, read_usize, write_usize};
     use quickcheck::quickcheck;
     use std::io::Cursor;
 
-    fn try_sort(mut input: Vec<u8>) -> bool {
-        let result = key_indexed_sort(&input);
-
-        input.sort();
-
-        input == result // because result is now sorted
-    }
-
     #[test]
-    fn can_sort_sample_input() {
-        assert!(try_sort("ABRACADABRA!".bytes().collect()));
-    }
-
-    #[test]
-    fn can_sort_arbitrary_inputs() {
-        quickcheck(try_sort as fn(Vec<u8>) -> bool);
+    fn can_build_next_vec_for_sample_input() {
+        let sample_t_vec = "ARD!RCAAAABB"; // from example in spec (encoded form of "ABRACADABRA!")
+        let result = key_indexed_count(&sample_t_vec.bytes().collect());
+        assert_eq!(result, vec![3, 0, 6, 7, 8, 9, 10, 11, 5, 2, 1, 4]);
     }
 
     fn try_encode_and_decode_usize(input: usize) -> bool {
